@@ -11,9 +11,40 @@ function matchesScheduleLocation(client, sched) {
   return currentPlace === expectedName;
 }
 
-async function processUserSchedules(client, now, currentTime, dayOfWeek, todayKey) {
+function resolveUserLocalTime(now, state) {
+  const { isHoliday, country } = isPublicHolidayForLocation(now, state);
+  const timeZone = country === "HU" ? "Europe/Budapest" : "Europe/London";
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+    hour12: false
+  }).formatToParts(now);
+
+  const map = {};
+  for (const p of parts) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+  const dayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const hh = map.hour === "24" ? "00" : map.hour;
+  return {
+    isHoliday,
+    holidayCountry: country,
+    timeZone,
+    dayOfWeek: dayMap[map.weekday] ?? now.getDay(),
+    currentTime: `${hh}:${map.minute}`,
+    todayKey: `${map.year}-${map.month}-${map.day}`
+  };
+}
+
+async function processUserSchedules(client, now) {
   client.applySimulationTick();
-  const { isHoliday, country: holidayCountry } = isPublicHolidayForLocation(now, client.store.state);
+  const { isHoliday, holidayCountry, dayOfWeek, currentTime, todayKey } =
+    resolveUserLocalTime(now, client.store.state);
 
   const schedules = client.getSchedules();
   let schedulesUpdated = false;
@@ -131,15 +162,8 @@ function startScheduler(manager) {
 
     try {
       const now = new Date();
-      const dayOfWeek = now.getDay();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      const currentTime = `${hh}:${mm}`;
-      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-        now.getDate()
-      ).padStart(2, "0")}`;
       await manager.forEachClient((client) =>
-        processUserSchedules(client, now, currentTime, dayOfWeek, todayKey).catch(
+        processUserSchedules(client, now).catch(
           (err) => console.error("Scheduler error for user:", err.message)
         )
       );
