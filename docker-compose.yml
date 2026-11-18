@@ -1,0 +1,46 @@
+services:
+  mx30-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mx30-companion-backend
+    restart: unless-stopped
+    ports:
+      - "3080:3080"
+    environment:
+      - PORT=3080
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://mx30.g-family.uk,http://localhost:3080,http://192.168.68.150:3080}
+      - MAZDA_REGION=${MAZDA_REGION:-MME}
+      - MAZDA_MODE=${MAZDA_MODE:-auto}
+      - POLL_INTERVAL_MINUTES=${POLL_INTERVAL_MINUTES:-30}
+      - TZ=${TZ:-Europe/Berlin}
+    volumes:
+      - mx30_data:/app/data
+    networks:
+      default:
+      n8n_net:
+        aliases:
+          - mx30_backend_service
+
+  android-builder:
+    profiles:
+      - build
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.android
+    container_name: mx30-android-builder
+    volumes:
+      - ./android-app:/workspace
+      - android_gradle_cache:/root/.gradle
+    working_dir: /workspace
+
+volumes:
+  mx30_data:
+  android_gradle_cache:
+
+networks:
+  n8n_net:
+    external: true

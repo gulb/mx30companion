@@ -1,0 +1,30 @@
+FROM eclipse-temurin:17-jdk-jammy
+
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_HOME=/opt/android-sdk
+ENV GRADLE_VERSION=8.7
+ENV PATH=${PATH}:/opt/gradle/gradle-${GRADLE_VERSION}/bin:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl unzip git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Gradle
+RUN mkdir -p /opt/gradle && \
+    curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip && \
+    unzip -q /tmp/gradle.zip -d /opt/gradle && \
+    rm /tmp/gradle.zip
+
+# Install Android Command Line Tools & SDK 34
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdline-tools.zip && \
+    unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline && \
+    mv /tmp/cmdline/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
+    rm -rf /tmp/cmdline /tmp/cmdline-tools.zip
+
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+WORKDIR /workspace
+
+CMD ["gradle", "assembleDebug", "--no-daemon"]

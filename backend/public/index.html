@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mazda MX-30 Companion — Encrypted Multi-User Portal</title>
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card: #141923;
+      --card-alt: #1a2130;
+      --border: #252f42;
+      --text: #f3f6fc;
+      --muted: #93a1b8;
+      --accent: #d93848;
+      --green: #22c55e;
+      --blue: #38bdf8;
+      --amber: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding: 18px;
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .auth-wrap {
+      max-width: 440px;
+      margin: 48px auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .brand h1 { margin: 0; font-size: 1.3rem; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.84rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+    }
+    .badge.live { color: var(--green); border-color: rgba(34, 197, 94, 0.4); }
+    .badge.demo { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); }
+    .badge.info { color: var(--blue); border-color: rgba(56, 189, 248, 0.4); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 0.92rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .action-strip {
+      display: grid;
+      gap: 8px;
+    }
+    .action-item {
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-item.critical { background: rgba(217, 56, 72, 0.16); border-color: var(--accent); }
+    .action-item.warning { background: rgba(245, 158, 11, 0.14); border-color: var(--amber); }
+    .action-item.info { background: rgba(56, 189, 248, 0.12); border-color: var(--blue); }
+    .action-item.ok { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.45); }
+    .hero-stat {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .soc { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; }
+    .range { font-size: 1.25rem; color: var(--blue); font-weight: 700; }
+    .progress {
+      width: 100%;
+      height: 12px;
+      background: #0d1119;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0;
+      border: 1px solid var(--border);
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+      transition: width 0.3s ease;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-top: 6px;
+      gap: 8px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card-alt);
+      color: var(--text);
+      padding: 9px 13px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+    button:hover { background: #232c40; }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.active { background: rgba(34, 197, 94, 0.2); border-color: var(--green); color: var(--green); }
+    button.danger { background: rgba(217, 56, 72, 0.16); border-color: var(--accent); color: #ffb4bc; }
+    .temp-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 0;
+      padding: 10px 12px;
+      background: var(--card-alt);
+      border-radius: 12px;
+    }
+    .temp-val { font-size: 1.45rem; font-weight: 700; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0d1119;
+      color: var(--text);
+      font-size: 0.88rem;
+    }
+    .field label { display: block; font-size: 0.76rem; color: var(--muted); margin-bottom: 4px; }
+    .list { display: grid; gap: 8px; max-height: 240px; overflow-y: auto; }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      background: var(--card-alt);
+      border-radius: 10px;
+      font-size: 0.84rem;
+    }
+    .pill-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .pill {
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .pill.open { border-color: var(--accent); color: #ffb4bc; background: rgba(217, 56, 72, 0.16); }
+    .pill.ok { border-color: rgba(34, 197, 94, 0.35); color: var(--green); }
+    .tire-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tire-box {
+      background: var(--card-alt);
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .map-frame {
+      width: 100%;
+      height: 220px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #0d1119;
+    }
+    .chart-bars {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      align-items: end;
+      height: 110px;
+      padding: 12px 8px 4px;
+      background: #0d1119;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar-fill {
+      width: 100%;
+      max-width: 24px;
+      border-radius: 5px 5px 0 0;
+      background: linear-gradient(180deg, var(--blue), var(--green));
+      min-height: 3px;
+    }
+    .muted { color: var(--muted); }
+    .error-banner {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(217, 56, 72, 0.16);
+      border: 1px solid var(--accent);
+      color: #ffb4bc;
+      font-size: 0.86rem;
+    }
+    .stat-box {
+      background: var(--card-alt);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth View -->
+  <div id="authView" class="auth-wrap" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div>
+        <h1 style="margin:0 0 6px;">Mazda MX-30 Companion</h1>
+        <p id="authSubtitle" class="muted" style="font-size:0.86rem; margin:0 0 16px;"></p>
+      </div>
+      <button id="authLangToggle" onclick="toggleAuthLanguage()" style="padding:6px 10px; font-size:0.8rem;">HU</button>
+    </div>
+
+    <button id="btnPasskeyLogin" class="primary" onclick="loginWithPasskey()" style="width:100%; padding:12px; font-size:0.95rem;"></button>
+
+    <div id="authDivider" style="margin:14px 0; text-align:center;" class="muted"></div>
+
+    <div id="gsiButtonSlot" style="display:flex; justify-content:center; margin-bottom:10px;"></div>
+
+    <div id="googleSetupBox" style="display:none; background:var(--card-alt); border:1px solid var(--border); border-radius:12px; padding:14px;">
+      <strong id="gsiSetupTitle" style="font-size:0.88rem;"></strong>
+      <div id="gsiSetupSteps" class="muted" style="font-size:0.8rem; margin-top:6px; line-height:1.5;"></div>
+      <div class="btn-row" style="margin-top:10px;">
+        <input id="googleClientIdInput" placeholder="123456-abc.apps.googleusercontent.com" style="flex:1;" />
+        <button id="btnSaveClientId" class="primary" onclick="saveGoogleClientId()"></button>
+      </div>
+    </div>
+
+    <div id="gsiManageLink" style="display:none; text-align:center; margin-top:8px;">
+      <button onclick="document.getElementById('googleSetupBox').style.display='block'" style="background:transparent; border:none; color:var(--muted); font-size:0.78rem; padding:4px;"></button>
+    </div>
+
+    <div id="authError" class="muted" style="font-size:0.82rem; color:#ffb4bc; margin-top:10px;"></div>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div id="appView" class="container" style="display:none;">
+    <div class="header">
+      <div class="brand">
+        <h1 id="vehicleName">Mazda MX-30 e-SKYACTIV</h1>
+        <p id="vehicleMeta">Betöltés...</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span id="modeBadge" class="badge demo">DEMO</span>
+        <span id="placeBadge" class="badge info">📍 --</span>
+        <span id="userBadge" class="badge">🔐 --</span>
+        <button id="btnLangToggle" onclick="toggleLanguage()">HU / EN</button>
+        <button onclick="postAction('/api/refresh')" id="btnSync" data-i18n="syncBtn">↻ Frissítés</button>
+        <button onclick="logout()" id="btnLogout" data-i18n="logoutBtn">Kilépés</button>
+      </div>
+    </div>
+
+    <div id="errorBanner" class="error-banner"></div>
+
+    <!-- Post-Registration Passkey Prompt -->
+    <div id="passkeySetupBanner" class="action-item info" style="display:none;">
+      <div>
+        <strong id="passkeyPromptTitle" data-i18n="passkeyPromptTitle">🔐 Állíts be Passkey-t az 1 koppintásos belépéshez!</strong>
+        <div id="passkeyPromptDesc" class="muted" style="font-size:0.82rem;" data-i18n="passkeyPromptDesc">
+          A Google-regisztráció kész — mentsd el a Passkey-t (Touch ID / Face ID / Windows Hello), hogy legközelebb egy koppintással beléphess.
+        </div>
+      </div>
+      <button class="primary" onclick="registerPasskey()" data-i18n="passkeyCreateBtn">🔑 Passkey létrehozása</button>
+    </div>
+
+    <!-- Next Action Needed ("Következő teendő") -->
+    <div id="actionStrip" class="action-strip"></div>
+
+    <!-- Vehicle Photo & Color Picker -->
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:220px;">
+        <h2 data-i18n="carColorTitle">Autód színe</h2>
+        <div id="carColorPills" class="btn-row" style="margin-top:8px;">
+          <button type="button" data-color="ceramic_metallic" onclick="setCarColor('ceramic_metallic')">⚪ Ceramic</button>
+          <button type="button" data-color="soul_red" onclick="setCarColor('soul_red')">🔴 Soul Red</button>
+          <button type="button" data-color="polymetal_grey" onclick="setCarColor('polymetal_grey')">⚫ Polymetal</button>
+          <button type="button" data-color="arctic_white" onclick="setCarColor('arctic_white')">⬜ Arctic White</button>
+        </div>
+      </div>
+      <img id="carHeroImg" src="/cars/mx30_ceramic_metallic.jpg" alt="Mazda MX-30" style="width:260px; max-width:100%; height:135px; object-fit:cover; border-radius:14px; border:1px solid rgba(255,255,255,0.12);" />
+    </div>
+
+    <!-- Top 3 Cards -->
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="batteryTitle">Akkumulátor és Töltés</h2>
+        <div class="hero-stat">
+          <div class="soc" id="socText">--%</div>
+          <div style="text-align:right;">
+            <div class="range" id="rangeText">-- km</div>
+            <div class="muted" id="kwhText" style="font-size:0.86rem;">-- / -- kWh</div>
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-fill" id="socBar" style="width:0%"></div>
+        </div>
+        <div class="meta-row">
+          <span id="plugText">--</span>
+          <span id="chargeText">--</span>
+        </div>
+        <div class="btn-row">
+          <button onclick="postAction('/api/charge/start')" id="btnChargeStart" data-i18n="btnChargeStart">⚡ Töltés indítása</button>
+          <button onclick="postAction('/api/charge/stop')" id="btnChargeStop" data-i18n="btnChargeStop">■ Leállítás</button>
+        </div>
+        <div class="meta-row" style="margin-top:12px; align-items:center;">
+          <span class="muted" data-i18n="capLabel">Akku méret (kWh):</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input id="cfgCapacity" type="number" step="0.5" min="10" max="120" style="width:84px; padding:5px 8px;" />
+            <button onclick="saveCapacity()" data-i18n="saveBtn">Mentés</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="climateTitle">Klíma és Előfűtés</h2>
+        <div class="meta-row">
+          <span><span data-i18n="cabinLabel">Utastér:</span> <strong id="cabinTemp">--°C</strong></span>
+          <span>HVAC: <strong id="hvacState">OFF</strong></span>
+        </div>
+        <div class="temp-control">
+          <button onclick="adjustTemp(-0.5)">−</button>
+          <div>
+            <div class="muted" style="font-size:0.75rem; text-align:center;" data-i18n="targetLabel">Célhőmérséklet</div>
+            <div class="temp-val" id="targetTemp">21.0°C</div>
+          </div>
+          <button onclick="adjustTemp(0.5)">+</button>
+        </div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <label style="display:inline-flex; gap:6px; align-items:center; font-size:0.84rem; color:var(--muted);">
+            <input type="checkbox" id="frontDefrost" onchange="saveHvacSettings()" style="width:auto;" />
+            <span data-i18n="frontDefrost">Első páramentesítés</span>
+          </label>
+          <label style="display:inline-flex; gap:6px; align-items:center; font-size:0.84rem; color:var(--muted);">
+            <input type="checkbox" id="rearDefrost" onchange="saveHvacSettings()" style="width:auto;" />
+            <span data-i18n="rearDefrost">Hátsó fűtés</span>
+          </label>
+        </div>
+        <div class="btn-row">
+          <button id="btnHvacToggle" class="primary" onclick="postAction('/api/hvac/toggle')">Klíma BE/KI</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="securityTitle">Ajtók, Ablakok és Gumik</h2>
+        <div class="meta-row">
+          <span><strong id="lockState">--</strong></span>
+          <span><span data-i18n="odoLabel">Km óra:</span> <strong id="odometerText">-- km</strong></span>
+        </div>
+        <div class="btn-row">
+          <button onclick="postAction('/api/doors/lock')" id="btnLock" data-i18n="btnLock">🔒 Zárás</button>
+          <button onclick="postAction('/api/doors/unlock')" id="btnUnlock" data-i18n="btnUnlock">🔓 Nyitás</button>
+          <button onclick="postAction('/api/lights/hazard')" id="btnFlash" data-i18n="btnFlash">🚨 Villogtatás</button>
+        </div>
+        <div id="aperturePills" class="pill-grid"></div>
+        <div class="tire-grid">
+          <div class="tire-box"><span class="muted">FL</span><strong id="tireFL">-- bar</strong></div>
+          <div class="tire-box"><span class="muted">FR</span><strong id="tireFR">-- bar</strong></div>
+          <div class="tire-box"><span class="muted">RL</span><strong id="tireRL">-- bar</strong></div>
+          <div class="tire-box"><span class="muted">RR</span><strong id="tireRR">-- bar</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map, Weather, Saved Places & Send POI -->
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="mapTitle">Térkép, Időjárás és Célküldés (POI)</h2>
+        <div class="meta-row" style="margin-bottom:8px;">
+          <span id="weatherSummary">🌤 --°C</span>
+          <span id="weatherBadge" class="badge info">--</span>
+        </div>
+        <iframe id="osmMap" class="map-frame" loading="lazy"></iframe>
+        <div class="btn-row" style="margin-top:10px;">
+          <input id="poiName" data-i18n-placeholder="poiNamePlaceholder" placeholder="Cél neve (pl. Szupermarket)" style="flex:1.2;" />
+          <input id="poiLat" type="number" step="0.0001" placeholder="Lat" style="flex:0.8;" />
+          <input id="poiLon" type="number" step="0.0001" placeholder="Lon" style="flex:0.8;" />
+          <button class="primary" onclick="sendPoi()" data-i18n="btnSendPoi">📍 Küldés autóba</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="placesTitle">Mentett Helyek (Geofencing)</h2>
+        <div id="placesList" class="list"></div>
+        <div class="btn-row">
+          <input id="newPlaceName" data-i18n-placeholder="newPlacePlaceholder" placeholder="Hely neve (pl. Otthon)" style="flex:1.2;" />
+          <input id="newPlaceRadius" type="number" value="150" placeholder="m" style="flex:0.6;" />
+          <button onclick="pinCurrentLocation()" data-i18n="btnPinLocation">📌 Jelenlegi GPS mentése</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart Pre-Heat Pro + Stats & Logs -->
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="schedTitle">Okos Előfűtés Pro</h2>
+        <div class="pill-grid" style="margin:0 0 10px;">
+          <span class="pill ok" data-i18n="holidayBadge">✓ Magyar munkaszüneti napok kihagyása</span>
+          <span class="pill ok" data-i18n="frostBadge">✓ Időjárás-alapú fagyvédelem</span>
+        </div>
+        <div id="scheduleList" class="list"></div>
+        <div class="btn-row">
+          <input id="newSchedName" data-i18n-placeholder="newSchedPlaceholder" placeholder="Ütemezés neve" style="flex:2;" />
+          <input id="newSchedTime" type="time" value="07:15" style="flex:1;" />
+          <button onclick="addSchedule()" data-i18n="btnAddSched">+ Hozzáadás</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="statsTitle">Heti és Havi Statisztika</h2>
+        <div class="form-grid">
+          <div class="stat-box">
+            <div class="muted" style="font-size:0.75rem;" data-i18n="weeklyLbl">Heti (7 nap)</div>
+            <div style="font-size:1.15rem; font-weight:700;" id="statWeekDist">-- km</div>
+            <div class="muted" style="font-size:0.78rem;" id="statWeekEnergy">-- kWh</div>
+          </div>
+          <div class="stat-box">
+            <div class="muted" style="font-size:0.75rem;" data-i18n="monthlyLbl">Havi (30 nap)</div>
+            <div style="font-size:1.15rem; font-weight:700;" id="statMonthDist">-- km</div>
+            <div class="muted" style="font-size:0.78rem;" id="statMonthEnergy">-- kWh</div>
+          </div>
+        </div>
+        <div id="dailyChart" class="chart-bars"></div>
+        <div class="btn-row">
+          <button id="btnSimTrip" onclick="simulateDemo('trip')" data-i18n="btnSimTrip">🚗 + Szimulált út</button>
+          <button id="btnSimCharge" onclick="simulateDemo('charge')" data-i18n="btnSimCharge">⚡ + Szimulált töltés</button>
+          <button onclick="downloadExport('trips.csv')" data-i18n="btnCsvTrips">⬇ Útnapló CSV</button>
+          <button onclick="downloadExport('charges.csv')" data-i18n="btnCsvCharges">⬇ Töltés CSV</button>
+          <button onclick="downloadExport('data.json')">⬇ JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trip & Charge Logs -->
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="tripsTitle">Útnapló (Trip Log)</h2>
+        <div id="tripList" class="list"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="chargesTitle">Töltésnapló (Charge Log)</h2>
+        <div id="chargeList" class="list"></div>
+      </div>
+    </div>
+
+    <!-- MyMazda OAuth2 & Security -->
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="oauthTitle">MyMazda Autó Csatlakoztatása (OAuth2)</h2>
+        <p class="muted" style="font-size:0.82rem; margin:0 0 10px;">
+          <span data-i18n="oauthSubtitle">Mazda 2 lépéses OAuth2 belépés:</span> <code id="oauthHostHint">eu.id.mazda.com</code>
+        </p>
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="regionLabel">Régió</label>
+            <select id="cfgRegion">
+              <option value="MME">Europe (MME)</option>
+              <option value="MNAO">North America (MNAO)</option>
+              <option value="MCI">Canada (MCI)</option>
+              <option value="MJO">Japan (MJO)</option>
+              <option value="MA">Australia (MA)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label data-i18n="modeLabel">Mód</label>
+            <select id="cfgMode" onchange="saveModeConfig()">
+              <option value="auto">Auto (Live)</option>
+              <option value="demo">Demo Simulation</option>
+            </select>
+          </div>
+        </div>
+        <div class="muted" style="font-size:0.79rem; line-height:1.45; margin:10px 0; padding:10px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);" data-i18n-html="oauthGuideHtml">
+          <b>Lépésről lépésre:</b><br>
+          1. Először nyisd meg a Fejlesztői eszköztárat (<code>⌥⌘I</code> Macen / <code>F12</code> Windowson), lépj a <b>Network</b> vagy <b>Console</b> fülre, és kapcsold be a <b>Preserve log</b> opciót.<br>
+          2. Kattints az <b>1. Mazda Belépés Megnyitása</b> gombra. (Ha az oldal csak <i>Loading...</i> állapotban marad, kapcsold ki a reklám-/követésblokkolót a <code>*.mazda.com</code> domainen, vagy próbáld Chrome inkognitóban.)<br>
+          3. Lépj be a MyMazda fiókoddal. A végén a böngésző egy <code>msauth://com.interrait.mymazda/...</code> linkre akar irányítani (ez normális, hogy nem tudja megnyitni).<br>
+          4. Másold ki a teljes <code>msauth://com.interrait.mymazda/...</code> linket a Console/Network naplóból, illeszd be alulra, majd kattints a <b>2. Autó csatlakoztatása</b> gombra.
+        </div>
+        <div class="btn-row">
+          <button id="btnOAuthStart" class="primary" onclick="startOAuthLogin()" data-i18n="btnOAuthStart">1. Mazda Belépési Link Létrehozása</button>
+          <button id="btnOAuthDisconnect" onclick="disconnectOAuth()" style="display:none;" data-i18n="btnOAuthDisconnect">Leválasztás</button>
+        </div>
+        <div id="oauthLinkHint" class="muted" style="font-size:0.8rem; margin-top:8px; display:none; padding:10px 12px; border-radius:10px; background:rgba(10,132,255,0.08); border:1px solid rgba(10,132,255,0.25);">
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <a id="oauthDirectLink" href="#" target="_blank" rel="noopener" class="primary" style="display:inline-block; padding:6px 12px; border-radius:8px; background:var(--blue); color:#fff; text-decoration:none; font-weight:600;" data-i18n="oauthDirectText">↗ Megnyitás új lapon</a>
+            <button type="button" onclick="copyOAuthUrl()" data-i18n="btnCopyOAuthUrl">📋 Link másolása (új laphoz)</button>
+            <button type="button" onclick="openOAuthSameTab()" data-i18n="btnSameTabOAuth">↪ Megnyitás ezen a lapon (DevTools marad)</button>
+          </div>
+          <div id="oauthCopyFeedback" style="margin-top:6px; color:#8ef5c0; display:none;"></div>
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <input id="oauthCallbackInput" type="text" placeholder="msauth://com.interrait.mymazda/..." style="flex:1;" />
+          <button id="btnOAuthComplete" class="primary" onclick="completeOAuthLogin()" data-i18n="btnOAuthComplete">2. Autó csatlakoztatása</button>
+        </div>
+        <div id="cfgStatusLine" class="muted" style="font-size:0.82rem; margin-top:8px;">--</div>
+        <div class="btn-row" style="justify-content:space-between;">
+          <span class="muted" style="font-size:0.78rem;">Android URL: <code id="androidUrlHint"></code> • <a href="/privacy.html" target="_blank" style="color:var(--blue);">Privacy Policy</a></span>
+          <button class="danger" onclick="deleteAccount()" data-i18n="deleteAccountBtn">🗑 Fiók törlése</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="passkeyMgmtTitle">Passkey Kezelés &amp; Eseménynapló</h2>
+        <div id="passkeysList" class="list" style="margin-bottom:10px;"></div>
+        <div class="btn-row" style="margin:0 0 14px;">
+          <button class="primary" onclick="registerPasskey()" data-i18n="addPasskeyBtn">🔑 Új Passkey hozzáadása</button>
+        </div>
+        <h2 data-i18n="historyTitle">Eseménynapló (Timeline)</h2>
+        <div id="historyList" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const I18N = {
+      hu: {
+        batteryTitle: "Akkumulátor és Töltés",
+        capLabel: "Akku méret (kWh):",
+        climateTitle: "Klíma és Előfűtés",
+        cabinLabel: "Utastér:",
+        targetLabel: "Célhőmérséklet",
+        frontDefrost: "Első páramentesítés",
+        rearDefrost: "Hátsó fűtés",
+        securityTitle: "Ajtók, Ablakok és Gumik",
+        odoLabel: "Km óra:",
+        mapTitle: "Térkép, Időjárás és Célküldés (POI)",
+        placesTitle: "Mentett Helyek (Geofencing)",
+        schedTitle: "Okos Előfűtés Pro",
+        holidayBadge: "✓ Magyar munkaszüneti napok kihagyása",
+        frostBadge: "✓ Időjárás-alapú fagyvédelem",
+        statsTitle: "Heti és Havi Statisztika",
+        weeklyLbl: "Heti (7 nap)",
+        monthlyLbl: "Havi (30 nap)",
+        tripsTitle: "Útnapló (Trip Log)",
+        chargesTitle: "Töltésnapló (Charge Log)",
+        historyTitle: "Eseménynapló (Timeline)",
+        carColorTitle: "Autód színe",
+        syncBtn: "↻ Frissítés",
+        logoutBtn: "Kilépés",
+        passkeyPromptTitle: "🔐 Állíts be Passkey-t az 1 koppintásos belépéshez!",
+        passkeyPromptDesc: "A Google-regisztráció kész — mentsd el a Passkey-t (Touch ID / Face ID / Windows Hello), hogy legközelebb egy koppintással beléphess.",
+        passkeyCreateBtn: "🔑 Passkey létrehozása",
+        oauthTitle: "MyMazda Autó Csatlakoztatása (OAuth2)",
+        oauthSubtitle: "Mazda 2 lépéses OAuth2 belépés:",
+        regionLabel: "Régió",
+        modeLabel: "Mód",
+        oauthGuideHtml:
+          `<b>Lépésről lépésre (ajánlott: Chrome Inkognitó):</b><br>` +
+          `1. Kattints az <b>1. Mazda Belépési Link Létrehozása</b> gombra, majd válaszd a <b>📋 Link másolása</b> gombot.<br>` +
+          `2. Nyiss egy <b>Chrome Inkognitó</b> ablakot (hogy a bővítmények ne blokkolják a belépést), nyisd meg a DevTools-t (<code>⌥⌘I</code> Macen / <code>F12</code> Windowson) a <b>Console</b> fülön, majd illeszd be és nyisd meg a linket.<br>` +
+          `3. Lépj be a MyMazda e-mail címeddel és jelszavaddal, majd add meg az e-mailben kapott <b>megerősítő kódot</b> és kattints a <b>Verify</b> gombra.<br>` +
+          `4. Közvetlenül a Verify után a <b>Console</b> fülön megjelenik az <code>msauth://com.interrait.mymazda/...</code> link. Másold ki a teljes URL-t, illeszd be alulra, és kattints a <b>2. Autó csatlakoztatása</b> gombra.`,
+        btnOAuthStart: "1. Mazda Belépési Link Létrehozása",
+        btnOAuthDisconnect: "Leválasztás",
+        oauthDirectText: "↗ Megnyitás új lapon",
+        btnCopyOAuthUrl: "📋 Link másolása (új laphoz)",
+        btnSameTabOAuth: "↪ Megnyitás ezen a lapon (DevTools marad)",
+        btnOAuthComplete: "2. Autó csatlakoztatása",
+        deleteAccountBtn: "🗑 Fiók törlése",
+        passkeyMgmtTitle: "Passkey Kezelés & Eseménynapló",
+        addPasskeyBtn: "🔑 Új Passkey hozzáadása",
+        btnChargeStart: "⚡ Töltés indítása",
+        btnChargeStop: "■ Leállítás",
+        saveBtn: "Mentés",
+        btnLock: "🔒 Zárás",
+        btnUnlock: "🔓 Nyitás",
+        btnFlash: "🚨 Villogtatás",
+        poiNamePlaceholder: "Cél neve (pl. Szupermarket)",
+        btnSendPoi: "📍 Küldés autóba",
+        newPlacePlaceholder: "Hely neve (pl. Otthon)",
+        btnPinLocation: "📌 Jelenlegi GPS mentése",
+        newSchedPlaceholder: "Ütemezés neve",
+        btnAddSched: "+ Hozzáadás",
+        btnSimTrip: "🚗 + Szimulált út",
+        btnSimCharge: "⚡ + Szimulált töltés",
+        btnCsvTrips: "⬇ Útnapló CSV",
+        btnCsvCharges: "⬇ Töltés CSV"
+      },
+      en: {
+        batteryTitle: "Battery & Charging",
+        capLabel: "Battery size (kWh):",
+        climateTitle: "Climate & Pre-Heating",
+        cabinLabel: "Cabin:",
+        targetLabel: "Target Temp",
+        frontDefrost: "Front Defrost",
+        rearDefrost: "Rear Defrost",
+        securityTitle: "Doors, Windows & Tires",
+        odoLabel: "Odometer:",
+        mapTitle: "Parked Map, Weather & Send POI",
+        placesTitle: "Saved Places (Geofencing)",
+        schedTitle: "Smart Pre-Heat Pro",
+        holidayBadge: "✓ Auto-skip Hungarian public holidays",
+        frostBadge: "✓ Weather-aware frost protection",
+        statsTitle: "Weekly & Monthly Stats",
+        weeklyLbl: "Weekly (7d)",
+        monthlyLbl: "Monthly (30d)",
+        tripsTitle: "Trip Log",
+        chargesTitle: "Charge Log",
+        historyTitle: "Timeline & Audit Log",
+        carColorTitle: "Your Car Color",
+        syncBtn: "↻ Sync",
+        logoutBtn: "Log out",
+        passkeyPromptTitle: "🔐 Set up a Passkey for 1-tap login!",
+        passkeyPromptDesc: "Google registration is complete — save a Passkey (Touch ID / Face ID / Windows Hello) so next time you can sign in with one tap.",
+        passkeyCreateBtn: "🔑 Create Passkey",
+        oauthTitle: "Connect Your Mazda Car (OAuth2)",
+        oauthSubtitle: "Mazda 2-step OAuth2 login:",
+        regionLabel: "Region",
+        modeLabel: "Mode",
+        oauthGuideHtml:
+          `<b>Step-by-step instructions (recommended: Chrome Incognito):</b><br>` +
+          `1. Click <b>1. Generate Mazda Login Link</b>, then click <b>📋 Copy Login URL</b>.<br>` +
+          `2. Open a <b>Chrome Incognito</b> window (so extensions don't block the login page), open DevTools (<code>⌥⌘I</code> on Mac / <code>F12</code> on Windows) on the <b>Console</b> tab, then paste and open the URL.<br>` +
+          `3. Sign in with your MyMazda email &amp; password, enter the <b>verification code</b> sent to your email, and click <b>Verify</b>.<br>` +
+          `4. Right after clicking Verify, the <code>msauth://com.interrait.mymazda/...</code> URL will appear in the DevTools <b>Console</b>. Copy the full URL, paste it below, and click <b>2. Connect Car</b>.`,
+        btnOAuthStart: "1. Generate Mazda Login Link",
+        btnOAuthDisconnect: "Disconnect",
+        oauthDirectText: "↗ Open in New Tab",
+        btnCopyOAuthUrl: "📋 Copy Login URL",
+        btnSameTabOAuth: "↪ Open in This Tab (keeps DevTools)",
+        btnOAuthComplete: "2. Connect Car",
+        deleteAccountBtn: "🗑 Delete Account",
+        passkeyMgmtTitle: "Passkey Management & Timeline",
+        addPasskeyBtn: "🔑 Add New Passkey",
+        btnChargeStart: "⚡ Start Charge",
+        btnChargeStop: "■ Stop Charge",
+        saveBtn: "Save",
+        btnLock: "🔒 Lock",
+        btnUnlock: "🔓 Unlock",
+        btnFlash: "🚨 Flash Lights",
+        poiNamePlaceholder: "Destination name (e.g. Supermarket)",
+        btnSendPoi: "📍 Send to Car",
+        newPlacePlaceholder: "Place name (e.g. Home)",
+        btnPinLocation: "📌 Save Current GPS",
+        newSchedPlaceholder: "Schedule name",
+        btnAddSched: "+ Add",
+        btnSimTrip: "🚗 + Simulated Trip",
+        btnSimCharge: "⚡ + Simulated Charge",
+        btnCsvTrips: "⬇ Trips CSV",
+        btnCsvCharges: "⬇ Charges CSV"
+      }
+    };
+
+    const AUTH_I18N = {
+      hu: {
+        langBtn: "🌐 Magyar (váltás EN)",
+        subtitle: "Google-fiókos regisztráció és Passkey belépés (AES-256-GCM titkosítás)",
+        passkeyBtn: "🔑 Belépés Passkey-jel (Touch ID / Face ID)",
+        divider: "— vagy regisztráció / belépés Google-fiókkal —",
+        setupTitle: "Google Bejelentkezés beállítása (1 perc)",
+        setupSteps: (origin) =>
+          `1. Nyisd meg a Google Cloud Console → Hitelesítő adatok (Credentials) oldalt.<br>` +
+          `2. Hozz létre egy <b>Web application</b> OAuth Client ID-t.<br>` +
+          `3. Add hozzá az engedélyezett JavaScript-forrásokhoz: <code>${origin}</code><br>` +
+          `4. Másold be alulra a Client ID-t, és mentsd el:`,
+        saveClientBtn: "Mentés",
+        manageClient: "Google Client ID módosítása",
+        clientSaved: "Google Client ID elmentve! Most már használhatod a Google gombot.",
+        noPasskeySupport: "A böngésző nem támogatja a Passkey-t (HTTPS vagy localhost szükséges)."
+      },
+      en: {
+        langBtn: "🌐 English (switch HU)",
+        subtitle: "Google Account registration & Passkey login (AES-256-GCM encrypted)",
+        passkeyBtn: "🔑 Sign in with Passkey (Touch ID / Face ID)",
+        divider: "— or register / sign in with Google —",
+        setupTitle: "Configure Google Sign-In (1 minute)",
+        setupSteps: (origin) =>
+          `1. Open Google Cloud Console → APIs & Services → Credentials.<br>` +
+          `2. Create an OAuth Client ID (<b>Web application</b>).<br>` +
+          `3. Add Authorized JavaScript origin: <code>${origin}</code><br>` +
+          `4. Paste the Client ID below and click Save:`,
+        saveClientBtn: "Save",
+        manageClient: "Change Google Client ID",
+        clientSaved: "Google Client ID saved! You can now sign in with Google.",
+        noPasskeySupport: "This browser does not support WebAuthn Passkeys (HTTPS or localhost required)."
+      }
+    };
+
+    let authLang = localStorage.getItem("mx30_lang") === "en" ? "en" : "hu";
+    let authToken = localStorage.getItem("mx30_token") || "";
+    let currentState = null;
+    let configFormInitialized = false;
+    let isSavingConfig = false;
+    let pollHandle = null;
+    let gsiInitialized = false;
+    let activeGoogleClientId = "";
+
+    function applyAuthLanguage() {
+      const t = AUTH_I18N[authLang];
+      document.getElementById("authLangToggle").textContent = t.langBtn;
+      document.getElementById("authSubtitle").textContent = t.subtitle;
+      document.getElementById("btnPasskeyLogin").textContent = t.passkeyBtn;
+      document.getElementById("authDivider").textContent = t.divider;
+      document.getElementById("gsiSetupTitle").textContent = t.setupTitle;
+      document.getElementById("gsiSetupSteps").innerHTML = t.setupSteps(window.location.origin);
+      document.getElementById("btnSaveClientId").textContent = t.saveClientBtn;
+      document.querySelector("#gsiManageLink button").textContent = t.manageClient;
+    }
+
+    function toggleAuthLanguage() {
+      authLang = authLang === "hu" ? "en" : "hu";
+      localStorage.setItem("mx30_lang", authLang);
+      applyAuthLanguage();
+      if (activeGoogleClientId) {
+        gsiInitialized = false;
+        document.getElementById("gsiButtonSlot").innerHTML = "";
+        loadGoogleGsi(activeGoogleClientId);
+      }
+    }
+
+    function b64urlToBytes(b64url) {
+      const pad = "=".repeat((4 - (b64url.length % 4)) % 4);
+      const b64 = (b64url + pad).replace(/-/g, "+").replace(/_/g, "/");
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function bytesToB64url(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    async function initAuthProviders() {
+      applyAuthLanguage();
+      try {
+        const res = await fetch("/api/auth/providers");
+        const cfg = await res.json();
+        activeGoogleClientId = cfg.googleClientId || "";
+        if (activeGoogleClientId) {
+          document.getElementById("googleClientIdInput").value = activeGoogleClientId;
+          document.getElementById("googleSetupBox").style.display = "none";
+          document.getElementById("gsiManageLink").style.display = "block";
+          loadGoogleGsi(activeGoogleClientId);
+        } else {
+          document.getElementById("googleSetupBox").style.display = "block";
+          document.getElementById("gsiManageLink").style.display = "none";
+        }
+      } catch (_err) {}
+    }
+
+    function loadGoogleGsi(clientId) {
+      if (!clientId || gsiInitialized) return;
+      gsiInitialized = true;
+      const existing = document.getElementById("googleGsiScript");
+      const renderGsi = () => {
+        if (!window.google?.accounts?.id) return;
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (resp) => signInWithGoogleCredential(resp.credential)
+        });
+        window.google.accounts.id.renderButton(document.getElementById("gsiButtonSlot"), {
+          theme: "outline",
+          size: "large",
+          width: 360,
+          locale: authLang
+        });
+      };
+      if (existing && window.google?.accounts?.id) {
+        renderGsi();
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "googleGsiScript";
+      script.src = `https://accounts.google.com/gsi/client?hl=${authLang}`;
+      script.async = true;
+      script.onload = renderGsi;
+      document.head.appendChild(script);
+    }
+
+    async function saveGoogleClientId() {
+      const clientId = document.getElementById("googleClientIdInput").value.trim();
+      const errEl = document.getElementById("authError");
+      try {
+        await api("/api/auth/providers", "POST", { googleClientId: clientId });
+        activeGoogleClientId = clientId;
+        gsiInitialized = false;
+        document.getElementById("gsiButtonSlot").innerHTML = "";
+        if (clientId) {
+          document.getElementById("googleSetupBox").style.display = "none";
+          document.getElementById("gsiManageLink").style.display = "block";
+          loadGoogleGsi(clientId);
+        }
+        errEl.textContent = AUTH_I18N[authLang].clientSaved;
+        errEl.style.color = "var(--green)";
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.color = "#ffb4bc";
+      }
+    }
+
+    async function signInWithGoogleCredential(idToken) {
+      const errEl = document.getElementById("authError");
+      errEl.textContent = "";
+      try {
+        const res = await api("/api/auth/google", "POST", {
+          idToken,
+          lang: authLang
+        });
+        authToken = res.token;
+        localStorage.setItem("mx30_token", authToken);
+        showAppView();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.color = "#ffb4bc";
+      }
+    }
+
+    async function registerPasskey() {
+      const isHu = (currentState?.lang || authLang) !== "en";
+      if (!window.PublicKeyCredential) {
+        alert(isHu
+          ? "Ez a böngésző nem támogatja a WebAuthn Passkey-t (HTTPS vagy localhost szükséges)."
+          : "This browser does not support WebAuthn Passkeys (HTTPS or localhost required).");
+        return;
+      }
+      try {
+        const opts = await api("/api/auth/passkey/register/options", "POST", {});
+        const publicKey = {
+          ...opts.publicKey,
+          challenge: b64urlToBytes(opts.publicKey.challenge),
+          user: {
+            ...opts.publicKey.user,
+            id: b64urlToBytes(opts.publicKey.user.id)
+          },
+          excludeCredentials: (opts.publicKey.excludeCredentials || []).map((c) => ({
+            ...c,
+            id: b64urlToBytes(c.id)
+          }))
+        };
+        const cred = await navigator.credentials.create({ publicKey });
+        const spkiBuf = cred.response.getPublicKey ? cred.response.getPublicKey() : null;
+        if (!spkiBuf) {
+          throw new Error(isHu
+            ? "A böngésző nem adott vissza publikus kulcsot (getPublicKey)."
+            : "Browser did not return a public key (getPublicKey).");
+        }
+        const verifyPayload = {
+          challengeId: opts.challengeId,
+          id: cred.id,
+          rawId: bytesToB64url(cred.rawId),
+          clientDataJSON: bytesToB64url(cred.response.clientDataJSON),
+          publicKeySpki: bytesToB64url(spkiBuf),
+          publicKeyAlg: cred.response.getPublicKeyAlgorithm ? cred.response.getPublicKeyAlgorithm() : -7,
+          transports: cred.response.getTransports ? cred.response.getTransports() : ["internal"],
+          deviceName: navigator.platform || "Web Passkey"
+        };
+        await api("/api/auth/passkey/register/verify", "POST", verifyPayload);
+        await loadPasskeys();
+        await loadStatus();
+        alert(isHu
+          ? "Passkey sikeresen mentve! Legközelebb már 1 koppintással beléphetsz."
+          : "Passkey saved! Next time you can sign in with 1 tap.");
+      } catch (err) {
+        alert((isHu ? "Passkey hiba: " : "Passkey error: ") + err.message);
+      }
+    }
+
+    async function loginWithPasskey() {
+      const errEl = document.getElementById("authError");
+      errEl.textContent = "";
+      if (!window.PublicKeyCredential) {
+        errEl.textContent = AUTH_I18N[authLang].noPasskeySupport;
+        return;
+      }
+      try {
+        const opts = await api("/api/auth/passkey/login/options", "POST", {});
+        const publicKey = {
+          ...opts.publicKey,
+          challenge: b64urlToBytes(opts.publicKey.challenge),
+          allowCredentials: (opts.publicKey.allowCredentials || []).map((c) => ({
+            ...c,
+            id: b64urlToBytes(c.id)
+          }))
+        };
+        const assertion = await navigator.credentials.get({ publicKey });
+        const res = await api("/api/auth/passkey/login/verify", "POST", {
+          challengeId: opts.challengeId,
+          id: assertion.id,
+          rawId: bytesToB64url(assertion.rawId),
+          clientDataJSON: bytesToB64url(assertion.response.clientDataJSON),
+          authenticatorData: bytesToB64url(assertion.response.authenticatorData),
+          signature: bytesToB64url(assertion.response.signature),
+          deviceName: navigator.platform || "Passkey Browser"
+        });
+        authToken = res.token;
+        localStorage.setItem("mx30_token", authToken);
+        showAppView();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    }
+
+    async function loadPasskeys() {
+      try {
+        const res = await api("/api/auth/passkeys");
+        const el = document.getElementById("passkeysList");
+        const isHu = (currentState?.lang || authLang) !== "en";
+        if (!res.passkeys || res.passkeys.length === 0) {
+          el.innerHTML = `<div class="muted" style="font-size:0.8rem;">${isHu ? "Még nincs Passkey regisztrálva ehhez a fiókhoz." : "No Passkeys registered for this account yet."}</div>`;
+          return;
+        }
+        el.innerHTML = res.passkeys.map((p) => `
+          <div class="list-item">
+            <div>
+              <strong>🔑 ${p.deviceName}</strong>
+              <div class="muted" style="font-size:0.75rem;">${new Date(p.createdAt).toLocaleDateString()}</div>
+            </div>
+            <button onclick="deletePasskey('${encodeURIComponent(p.credentialId)}')">✕</button>
+          </div>
+        `).join("");
+      } catch (_err) {}
+    }
+
+    async function deletePasskey(encodedId) {
+      await api(`/api/auth/passkeys/${encodedId}`, "DELETE");
+      await loadPasskeys();
+      await loadStatus();
+    }
+
+    async function api(url, method = "GET", body = null) {
+      const headers = { "Content-Type": "application/json" };
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+      const opts = { method, headers };
+      if (body !== null) opts.body = JSON.stringify(body);
+      const res = await fetch(url, opts);
+      const data = await res.json();
+      if (res.status === 401) {
+        authToken = "";
+        localStorage.removeItem("mx30_token");
+        showAuthView();
+        throw new Error(data.error || "Session expired");
+      }
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    function logout() {
+      api("/api/auth/logout", "POST").catch(() => {});
+      authToken = "";
+      localStorage.removeItem("mx30_token");
+      showAuthView();
+    }
+
+    function showAuthView() {
+      if (pollHandle) clearInterval(pollHandle);
+      pollHandle = null;
+      document.getElementById("authView").style.display = "block";
+      document.getElementById("appView").style.display = "none";
+      initAuthProviders();
+    }
+
+    async function completeAndroidAppHandoff() {
+      const cb = sessionStorage.getItem("mx30_app_callback");
+      if (!cb || cb !== "mx30companion://auth") return false;
+      try {
+        const res = await api("/api/auth/app-code", "POST", {});
+        sessionStorage.removeItem("mx30_app_callback");
+        if (res.code) {
+          window.location.href = `mx30companion://auth?code=${encodeURIComponent(res.code)}`;
+          return true;
+        }
+      } catch (err) {
+        console.error("Android app handoff failed:", err);
+      }
+      return false;
+    }
+
+    async function showAppView() {
+      if (await completeAndroidAppHandoff()) return;
+      document.getElementById("authView").style.display = "none";
+      document.getElementById("appView").style.display = "grid";
+      configFormInitialized = false;
+      loadStatus(true);
+      loadPasskeys();
+      if (pollHandle) clearInterval(pollHandle);
+      pollHandle = setInterval(() => loadStatus(false), 10000);
+    }
+
+    function applyTranslations(lang) {
+      const dict = I18N[lang === "en" ? "en" : "hu"];
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-html");
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        if (dict[key]) el.placeholder = dict[key];
+      });
+      document.getElementById("btnLangToggle").textContent = lang === "en" ? "🌐 EN → HU" : "🌐 HU → EN";
+    }
+
+    function render(state) {
+      currentState = state;
+      const lang = state.lang === "en" ? "en" : "hu";
+      const isHu = lang === "hu";
+      applyTranslations(lang);
+
+      document.getElementById("vehicleName").textContent = state.nickname || "Mazda MX-30";
+      document.getElementById("vehicleMeta").textContent =
+        `VIN/ID: ${state.vehicleId} • ${state.region} • ${new Date(state.lastUpdated).toLocaleTimeString()}`;
+
+      const badge = document.getElementById("modeBadge");
+      badge.textContent = state.mode === "live" ? "LIVE • MYMAZDA" : "DEMO";
+      badge.className = `badge ${state.mode === "live" ? "live" : "demo"}`;
+      const carColor = state.carColor || "ceramic_metallic";
+      const heroImg = document.getElementById("carHeroImg");
+      if (heroImg) heroImg.src = `/cars/mx30_${carColor}.jpg`;
+      document.querySelectorAll("#carColorPills button").forEach((btn) => {
+        btn.className = btn.getAttribute("data-color") === carColor ? "primary" : "";
+      });
+      document.getElementById("btnSimTrip").style.display = state.mode === "live" ? "none" : "inline-block";
+      document.getElementById("btnSimCharge").style.display = state.mode === "live" ? "none" : "inline-block";
+      document.getElementById("placeBadge").textContent = `📍 ${state.currentPlace || "--"}`;
+      const pkCount = state.user?.passkeysCount || 0;
+      document.getElementById("userBadge").textContent = `${pkCount > 0 ? "🔑" : "🔐"} ${state.user?.email || "Encrypted"}`;
+
+      const pkBanner = document.getElementById("passkeySetupBanner");
+      pkBanner.style.display = state.user && !state.user.hasPasskey ? "flex" : "none";
+      if (!isHu) {
+        document.getElementById("passkeyPromptTitle").textContent = "🔐 Set up a Passkey for 1-Tap Login!";
+        document.getElementById("passkeyPromptDesc").textContent = "Your Google registration is complete — save a Passkey (Touch ID / Face ID / Windows Hello) for instant sign-in next time.";
+      } else {
+        document.getElementById("passkeyPromptTitle").textContent = "🔐 Állíts be Passkey-t az 1 koppintásos belépéshez!";
+        document.getElementById("passkeyPromptDesc").textContent = "A Google-regisztráció kész — mentsd el a Passkey-t (Touch ID / Face ID / Windows Hello), hogy legközelebb egy koppintással beléphess.";
+      }
+
+      const errBanner = document.getElementById("errorBanner");
+      if (state.lastError) {
+        errBanner.style.display = "block";
+        errBanner.textContent = `${isHu ? "Szinkron megjegyzés" : "Sync note"}: ${state.lastError}`;
+      } else {
+        errBanner.style.display = "none";
+      }
+
+      // Action strip
+      const actionEl = document.getElementById("actionStrip");
+      actionEl.innerHTML = "";
+      (state.actions || []).forEach((item) => {
+        const div = document.createElement("div");
+        div.className = `action-item ${item.severity}`;
+        div.innerHTML = `
+          <div>
+            <strong>${item.title}</strong>
+            <div class="muted" style="font-size:0.82rem;">${item.detail}</div>
+          </div>
+          <span class="badge">${item.severity.toUpperCase()}</span>
+        `;
+        actionEl.appendChild(div);
+      });
+
+      // Battery & Energy
+      document.getElementById("socText").textContent = `${state.battery.socPercent}%`;
+      document.getElementById("rangeText").textContent = `${state.battery.remainingRangeKm} km`;
+      document.getElementById("kwhText").textContent = `${state.battery.storedKwh ?? "--"} / ${state.battery.capacityKwh ?? 30} kWh`;
+      document.getElementById("socBar").style.width = `${state.battery.socPercent}%`;
+      document.getElementById("plugText").textContent = state.battery.pluggedIn
+        ? (isHu ? "🔌 Csatlakoztatva" : "🔌 Plugged in")
+        : (isHu ? "Nincs bedugva" : "Unplugged");
+      document.getElementById("chargeText").textContent = state.battery.charging
+        ? `${state.battery.chargingKw || 6.6} kW • ${state.battery.chargeTimeRemainingMin}m`
+        : (isHu ? "Nem tölt" : "Idle");
+      if (!document.getElementById("cfgCapacity").matches(":focus")) {
+        document.getElementById("cfgCapacity").value = state.battery.capacityKwh || 30;
+      }
+
+      // Climate
+      document.getElementById("cabinTemp").textContent = `${state.hvac.interiorTempC}°C`;
+      document.getElementById("targetTemp").textContent = `${Number(state.hvac.targetTempC).toFixed(1)}°C`;
+      document.getElementById("hvacState").textContent = state.hvac.hvacOn ? "ON" : "OFF";
+      document.getElementById("frontDefrost").checked = Boolean(state.hvac.frontDefroster);
+      document.getElementById("rearDefrost").checked = Boolean(state.hvac.rearDefroster);
+      const btnHvac = document.getElementById("btnHvacToggle");
+      btnHvac.textContent = state.hvac.hvacOn
+        ? (isHu ? "❄ Klíma kikapcsolása" : "❄ Turn Climate OFF")
+        : (isHu ? "🔥 Előfűtés / Klíma BE" : "🔥 Pre-Heat / Climate ON");
+      btnHvac.className = state.hvac.hvacOn ? "active" : "primary";
+
+      // Doors, Windows, Tires
+      document.getElementById("lockState").textContent = state.doors.locked
+        ? (isHu ? "🔒 Zárva" : "🔒 Locked")
+        : (isHu ? "🔓 Nyitva" : "🔓 Unlocked");
+      document.getElementById("odometerText").textContent = `${Number(state.odometerKm || 0).toLocaleString()} km`;
+      document.getElementById("tireFL").textContent = `${state.tires.frontLeftBar} bar`;
+      document.getElementById("tireFR").textContent = `${state.tires.frontRightBar} bar`;
+      document.getElementById("tireRL").textContent = `${state.tires.rearLeftBar} bar`;
+      document.getElementById("tireRR").textContent = `${state.tires.rearRightBar} bar`;
+
+      const apertures = [
+        [isHu ? "Vezető ajtó" : "Driver Door", state.doors.driverOpen],
+        [isHu ? "Utas ajtó" : "Pass Door", state.doors.passengerOpen],
+        [isHu ? "Bal hátsó" : "Rear L", state.doors.rearLeftOpen],
+        [isHu ? "Jobb hátsó" : "Rear R", state.doors.rearRightOpen],
+        [isHu ? "Csomagtartó" : "Trunk", state.doors.trunkOpen],
+        [isHu ? "Motorháztető" : "Hood", state.doors.hoodOpen],
+        [isHu ? "Első ablakok" : "Front Win", state.windows?.driverOpen || state.windows?.passengerOpen],
+        [isHu ? "Hátsó ablakok" : "Rear Win", state.windows?.rearLeftOpen || state.windows?.rearRightOpen]
+      ];
+      const pillContainer = document.getElementById("aperturePills");
+      pillContainer.innerHTML = apertures
+        .map(([label, open]) => `<span class="pill ${open ? "open" : "ok"}">${label}: ${open ? (isHu ? "NYITVA" : "OPEN") : "OK"}</span>`)
+        .join("");
+
+      // Map & Weather
+      const lat = state.location?.latitude ?? 47.4979;
+      const lon = state.location?.longitude ?? 19.0402;
+      const mapEl = document.getElementById("osmMap");
+      const delta = 0.008;
+      const expectedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - delta}%2C${lat - delta}%2C${lon + delta}%2C${lat + delta}&layer=mapnik&marker=${lat}%2C${lon}`;
+      if (mapEl.getAttribute("data-loc") !== `${lat},${lon}`) {
+        mapEl.src = expectedSrc;
+        mapEl.setAttribute("data-loc", `${lat},${lon}`);
+      }
+      const w = state.weather || {};
+      document.getElementById("weatherSummary").textContent = `🌤 ${w.tempC ?? "--"}°C (${w.condition || "--"}) • Min ${w.minTempC ?? "--"}° / Max ${w.maxTempC ?? "--"}°`;
+      const wBadge = document.getElementById("weatherBadge");
+      if (w.frostWarning) {
+        wBadge.textContent = isHu ? "❄ Fagyveszély!" : "❄ Frost Warning";
+        wBadge.className = "badge demo";
+      } else if (w.heatWarning) {
+        wBadge.textContent = isHu ? "☀ Hőség!" : "☀ Heat Warning";
+        wBadge.className = "badge demo";
+      } else {
+        wBadge.textContent = isHu ? "Normál idő" : "Mild weather";
+        wBadge.className = "badge info";
+      }
+
+      // Places
+      const placesEl = document.getElementById("placesList");
+      placesEl.innerHTML = "";
+      (state.places || []).forEach((p, idx) => {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        item.innerHTML = `
+          <div>
+            <strong>${p.name}</strong>
+            <div class="muted" style="font-size:0.76rem;">${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)} (${p.radiusMeters}m)</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="sendPlacePoi(${p.latitude}, ${p.longitude}, '${p.name.replace(/'/g, "\\'")}')">📍 Nav</button>
+            <button onclick="deletePlace(${idx})">✕</button>
+          </div>
+        `;
+        placesEl.appendChild(item);
+      });
+
+      // Schedules
+      const schedContainer = document.getElementById("scheduleList");
+      schedContainer.innerHTML = "";
+      (state.schedules || []).forEach((s, idx) => {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        item.innerHTML = `
+          <div>
+            <strong>${s.time}</strong> — ${s.name}
+            <div class="muted" style="font-size:0.76rem;">${s.targetTempC}°C ${s.skipNext ? (isHu ? "• HOLNAP KIHAGYVA" : "• SKIPPING NEXT") : ""}</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button onclick="skipNext('${s.id}')" class="${s.skipNext ? "active" : ""}">${isHu ? (s.skipNext ? "Kihagyva ✓" : "Holnap kihagy") : (s.skipNext ? "Skipped ✓" : "Skip Next")}</button>
+            <button onclick="toggleSchedule(${idx})">${s.enabled ? (isHu ? "Aktív" : "On") : (isHu ? "Szünet" : "Off")}</button>
+            <button onclick="deleteSchedule(${idx})">✕</button>
+          </div>
+        `;
+        schedContainer.appendChild(item);
+      });
+
+      // Stats & Chart
+      const wk = state.stats?.weekly || {};
+      const mo = state.stats?.monthly || {};
+      document.getElementById("statWeekDist").textContent = `${wk.distanceKm ?? 0} km`;
+      document.getElementById("statWeekEnergy").textContent = `-${wk.kwhUsed ?? 0} kWh • +${wk.kwhCharged ?? 0} kWh (${wk.avgEfficiency ?? 0} kWh/100)`;
+      document.getElementById("statMonthDist").textContent = `${mo.distanceKm ?? 0} km`;
+      document.getElementById("statMonthEnergy").textContent = `-${mo.kwhUsed ?? 0} kWh • +${mo.kwhCharged ?? 0} kWh (${mo.avgEfficiency ?? 0} kWh/100)`;
+
+      const series = state.stats?.dailySeries || [];
+      const maxVal = Math.max(10, ...series.map((d) => d.distanceKm + d.kwhCharged * 2));
+      document.getElementById("dailyChart").innerHTML = series
+        .map((d) => {
+          const h = Math.round(((d.distanceKm + d.kwhCharged * 2) / maxVal) * 75);
+          return `<div class="bar-col" title="${d.date}: ${d.distanceKm} km, +${d.kwhCharged} kWh">
+            <div class="bar-fill" style="height:${Math.max(4, h)}px;"></div>
+            <span class="muted" style="font-size:0.68rem;">${d.date}</span>
+          </div>`;
+        })
+        .join("");
+
+      // Trips & Charges
+      const trips = state.trips || [];
+      document.getElementById("tripList").innerHTML = trips.length === 0
+        ? `<div class="muted" style="font-size:0.82rem;">${isHu ? "Még nincs rögzített valódi út." : "No real trips recorded yet."}</div>`
+        : trips.slice(0, 12)
+          .map((t) => `<div class="list-item">
+            <div><strong>${t.fromPlace} → ${t.toPlace}</strong><div class="muted" style="font-size:0.75rem;">${new Date(t.endTime || t.startTime).toLocaleString()}</div></div>
+            <div style="text-align:right;"><strong>${t.distanceKm} km</strong><div class="muted" style="font-size:0.75rem;">${t.kwhUsed} kWh (${t.efficiencyKwhPer100Km})</div></div>
+          </div>`).join("");
+
+      const charges = state.charges || [];
+      document.getElementById("chargeList").innerHTML = charges.length === 0
+        ? `<div class="muted" style="font-size:0.82rem;">${isHu ? "Még nincs rögzített valódi töltés." : "No real charges recorded yet."}</div>`
+        : charges.slice(0, 12)
+          .map((c) => `<div class="list-item">
+            <div><strong>${c.place} (${c.startSoc}% → ${c.endSoc}%)</strong><div class="muted" style="font-size:0.75rem;">${new Date(c.timestamp).toLocaleString()}</div></div>
+            <div style="text-align:right;"><strong>+${c.kwhAdded} kWh</strong><div class="muted" style="font-size:0.75rem;">${c.avgKw} kW • ${c.durationMin}m</div></div>
+          </div>`).join("");
+
+      // OAuth / Config
+      if (state.config) {
+        if (!configFormInitialized) {
+          document.getElementById("cfgRegion").value = state.config.region || "MME";
+          document.getElementById("cfgMode").value = state.config.mode || "auto";
+          configFormInitialized = true;
+        }
+        const hostMap = { MME: "eu.id.mazda.com", MNAO: "na.id.mazda.com", MCI: "na.id.mazda.com", MJO: "ap.id.mazda.com", MA: "au.id.mazda.com" };
+        document.getElementById("oauthHostHint").textContent = hostMap[document.getElementById("cfgRegion").value] || "eu.id.mazda.com";
+        document.getElementById("btnOAuthDisconnect").style.display = state.config.hasOAuthToken ? "inline-block" : "none";
+
+        if (!isSavingConfig) {
+          const cfgLine = document.getElementById("cfgStatusLine");
+          const authStatus = state.config.hasOAuthToken
+            ? `OAuth Connected${state.config.email ? ` (${state.config.email})` : ""}`
+            : (isHu ? "Nincs Mazda OAuth belépés" : "Not signed in to Mazda");
+          cfgLine.textContent = `${authStatus} • ${state.mode === "live" ? "LIVE" : "DEMO"}`;
+          cfgLine.style.color = state.mode === "live" ? "var(--green)" : "var(--muted)";
+        }
+      }
+      document.getElementById("androidUrlHint").textContent = window.location.origin;
+
+      // Timeline
+      document.getElementById("historyList").innerHTML = (state.history || []).slice(0, 15)
+        .map((h) => `<div class="list-item"><span>${h.event}</span><span class="muted" style="font-size:0.76rem;">${new Date(h.timestamp).toLocaleTimeString()} (${h.source})</span></div>`)
+        .join("");
+    }
+
+    async function loadStatus(refreshCloud = false) {
+      try {
+        render(await api(refreshCloud ? "/api/status?refresh=1" : "/api/status"));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function postAction(path, body = null) {
+      try {
+        render(await api(path, "POST", body));
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function setCarColor(carColor) {
+      render(await api("/api/preferences", "POST", { carColor }));
+    }
+
+    async function toggleLanguage() {
+      const next = currentState?.lang === "en" ? "hu" : "en";
+      authLang = next;
+      localStorage.setItem("mx30_lang", next);
+      render(await api("/api/preferences", "POST", { lang: next }));
+      loadPasskeys();
+    }
+
+    async function saveCapacity() {
+      const cap = Number(document.getElementById("cfgCapacity").value);
+      render(await api("/api/preferences", "POST", { capacityKwh: cap }));
+    }
+
+    function adjustTemp(delta) {
+      if (!currentState) return;
+      const next = Math.max(16, Math.min(28, currentState.hvac.targetTempC + delta));
+      postAction("/api/hvac/settings", {
+        targetTempC: next,
+        frontDefroster: document.getElementById("frontDefrost").checked,
+        rearDefroster: document.getElementById("rearDefrost").checked
+      });
+    }
+
+    function saveHvacSettings() {
+      if (!currentState) return;
+      postAction("/api/hvac/settings", {
+        targetTempC: currentState.hvac.targetTempC,
+        frontDefroster: document.getElementById("frontDefrost").checked,
+        rearDefroster: document.getElementById("rearDefrost").checked
+      });
+    }
+
+    async function sendPoi() {
+      const name = document.getElementById("poiName").value.trim() || "Destination";
+      const lat = Number(document.getElementById("poiLat").value);
+      const lon = Number(document.getElementById("poiLon").value);
+      render(await api("/api/poi/send", "POST", { latitude: lat, longitude: lon, name }));
+    }
+
+    async function sendPlacePoi(latitude, longitude, name) {
+      render(await api("/api/poi/send", "POST", { latitude, longitude, name }));
+    }
+
+    async function pinCurrentLocation() {
+      const name = document.getElementById("newPlaceName").value.trim() || "Mentett hely";
+      const radiusMeters = Number(document.getElementById("newPlaceRadius").value) || 150;
+      const lat = currentState?.location?.latitude ?? 47.4979;
+      const lon = currentState?.location?.longitude ?? 19.0402;
+      const places = [...(currentState?.places || []), { id: `p-${Date.now()}`, name, latitude: lat, longitude: lon, radiusMeters }];
+      render(await api("/api/places", "POST", { places }));
+      document.getElementById("newPlaceName").value = "";
+    }
+
+    async function deletePlace(idx) {
+      const places = (currentState?.places || []).filter((_, i) => i !== idx);
+      render(await api("/api/places", "POST", { places }));
+    }
+
+    async function skipNext(id) {
+      render(await api(`/api/schedules/${encodeURIComponent(id)}/skip-next`, "POST"));
+    }
+
+    async function toggleSchedule(idx) {
+      const next = [...currentState.schedules];
+      next[idx] = { ...next[idx], enabled: !next[idx].enabled };
+      await api("/api/schedules", "POST", { schedules: next });
+      loadStatus();
+    }
+
+    async function deleteSchedule(idx) {
+      const next = currentState.schedules.filter((_, i) => i !== idx);
+      await api("/api/schedules", "POST", { schedules: next });
+      loadStatus();
+    }
+
+    async function addSchedule() {
+      const name = document.getElementById("newSchedName").value.trim() || ((currentState?.lang || authLang) === "en" ? "Morning Pre-Heat" : "Indulás előfűtés");
+      const time = document.getElementById("newSchedTime").value || "07:30";
+      const next = [
+        ...(currentState?.schedules || []),
+        {
+          id: `sched-${Date.now()}`,
+          name,
+          time,
+          days: [1, 2, 3, 4, 5],
+          enabled: true,
+          targetTempC: currentState?.hvac?.targetTempC || 21,
+          frontDefroster: true,
+          skipHolidays: true,
+          weatherAware: true,
+          skipNext: false
+        }
+      ];
+      await api("/api/schedules", "POST", { schedules: next });
+      document.getElementById("newSchedName").value = "";
+      loadStatus();
+    }
+
+    async function simulateDemo(type) {
+      render(await api("/api/demo/simulate", "POST", { type }));
+    }
+
+    function downloadExport(file) {
+      window.open(`/api/export/${file}?token=${encodeURIComponent(authToken)}`, "_blank", "noopener");
+    }
+
+    let latestOAuthUrl = "";
+
+    async function startOAuthLogin() {
+      const region = document.getElementById("cfgRegion").value;
+      const res = await api("/api/oauth/start", "POST", { region });
+      latestOAuthUrl = res.authorizeUrl;
+      const linkEl = document.getElementById("oauthDirectLink");
+      linkEl.href = res.authorizeUrl;
+      document.getElementById("oauthLinkHint").style.display = "block";
+      document.getElementById("oauthCopyFeedback").style.display = "none";
+    }
+
+    async function copyOAuthUrl() {
+      if (!latestOAuthUrl) return;
+      const isHu = (currentState?.lang || authLang) !== "en";
+      await navigator.clipboard.writeText(latestOAuthUrl);
+      const fb = document.getElementById("oauthCopyFeedback");
+      fb.textContent = isHu
+        ? "✓ Link kimásolva! Nyiss egy új lapot, nyisd meg az ⌥⌘I DevTools-t, majd illeszd be a linket."
+        : "✓ Copied! Open a new tab, open DevTools (⌥⌘I / F12) first, then paste the URL.";
+      fb.style.display = "block";
+    }
+
+    function openOAuthSameTab() {
+      if (!latestOAuthUrl) return;
+      window.location.href = latestOAuthUrl;
+    }
+
+    async function completeOAuthLogin() {
+      const callbackUrl = document.getElementById("oauthCallbackInput").value.trim();
+      const cfgLine = document.getElementById("cfgStatusLine");
+      const isHu = (currentState?.lang || authLang) !== "en";
+      isSavingConfig = true;
+      cfgLine.textContent = isHu ? "Csatlakozás a Mazdához..." : "Connecting to Mazda...";
+      try {
+        const state = await api("/api/oauth/callback", "POST", { callbackUrl });
+        document.getElementById("oauthCallbackInput").value = "";
+        document.getElementById("oauthLinkHint").style.display = "none";
+        configFormInitialized = false;
+        isSavingConfig = false;
+        render(state);
+      } catch (err) {
+        isSavingConfig = false;
+        cfgLine.textContent = err.message;
+        cfgLine.style.color = "#ffb4bc";
+      }
+    }
+
+    async function saveModeConfig() {
+      const region = document.getElementById("cfgRegion").value;
+      const mode = document.getElementById("cfgMode").value;
+      configFormInitialized = false;
+      render(await api("/api/config", "POST", { region, mode }));
+    }
+
+    async function disconnectOAuth() {
+      configFormInitialized = false;
+      render(await api("/api/oauth/disconnect", "POST"));
+    }
+
+    async function deleteAccount() {
+      const isHu = (currentState?.lang || authLang) !== "en";
+      const msg = isHu
+        ? "Biztosan törlöd a titkosított fiókodat és minden adatodat?"
+        : "Are you sure you want to permanently delete your encrypted account and all data?";
+      if (!confirm(msg)) return;
+      await api("/api/account", "DELETE");
+      authToken = "";
+      localStorage.removeItem("mx30_token");
+      showAuthView();
+    }
+
+    const initParams = new URLSearchParams(window.location.search);
+    if (initParams.get("app_callback") === "mx30companion://auth") {
+      sessionStorage.setItem("mx30_app_callback", "mx30companion://auth");
+    }
+
+    if (authToken) {
+      showAppView();
+    } else {
+      showAuthView();
+    }
+  </script>
+</body>
+</html>

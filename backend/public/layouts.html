@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mazda MX-30 Android App — 3 Apple iOS Light Layout Plans</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .ios-glass {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    .ios-pill-btn {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(15, 23, 42, 0.07);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.15s ease;
+    }
+    .ios-pill-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 7px 18px rgba(15, 23, 42, 0.09);
+    }
+    .ios-pill-btn:active {
+      transform: scale(0.96);
+    }
+    .phone-shell {
+      border-radius: 44px;
+      padding: 10px;
+      background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+      box-shadow: 0 28px 60px rgba(2, 6, 23, 0.24), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+    .phone-screen-a {
+      background: radial-gradient(circle at 50% 34%, #ffffff 0%, #f5f6fa 56%, #eaeef7 100%);
+      border-radius: 35px;
+    }
+    .phone-screen-b {
+      background: radial-gradient(circle at 50% 25%, #ffffff 0%, #f2f4f8 62%, #e6ebf4 100%);
+      border-radius: 35px;
+    }
+    .phone-screen-c {
+      background: linear-gradient(180deg, #eef2f9 0%, #ffffff 42%, #eef1f7 100%);
+      border-radius: 35px;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.95; }
+    }
+    .anim-pulse-glow {
+      animation: pulseGlow 1.8s ease-in-out infinite;
+    }
+    @keyframes flashLights {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+    .anim-flash {
+      animation: flashLights 0.45s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen p-4 md:p-6">
+  <div class="max-w-[1440px] mx-auto space-y-5">
+    <!-- Top Studio Header & Interactive Controls -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-600 text-white">Android UI Blueprint</span>
+          <h1 class="text-lg md:text-xl font-bold tracking-tight" id="studioTitle">Mazda MX-30 — 3 Apple iOS Light Layout Plans</h1>
+        </div>
+        <p class="text-xs text-slate-400 mt-1" id="studioSubtitle">
+          Click any car control button inside the phone mockups below to preview live states (lights, climate waves, locks, charging, tabs).
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- View Mode -->
+        <div class="flex items-center gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+          <button onclick="setView('all')" id="view-all" class="px-3 py-1.5 rounded-lg font-semibold transition">All 3</button>
+          <button onclick="setView('A')" id="view-A" class="px-3 py-1.5 rounded-lg font-semibold transition">Plan A</button>
+          <button onclick="setView('B')" id="view-B" class="px-3 py-1.5 rounded-lg font-semibold transition">Plan B</button>
+          <button onclick="setView('C')" id="view-C" class="px-3 py-1.5 rounded-lg font-semibold transition">Plan C</button>
+        </div>
+
+        <!-- Paint Selector -->
+        <div class="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+          <button onclick="setPaint('ceramic')" id="paint-ceramic" class="px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-medium">
+            <span class="w-3 h-3 rounded-full border border-slate-400" style="background:#e6e8ec"></span> Ceramic
+          </button>
+          <button onclick="setPaint('soulred')" id="paint-soulred" class="px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-medium">
+            <span class="w-3 h-3 rounded-full border border-slate-400" style="background:#b91c2e"></span> Soul Red
+          </button>
+          <button onclick="setPaint('polymetal')" id="paint-polymetal" class="px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-medium">
+            <span class="w-3 h-3 rounded-full border border-slate-400" style="background:#64748b"></span> Polymetal
+          </button>
+        </div>
+
+        <!-- Language Switcher -->
+        <button onclick="toggleLang()" id="langBtn" class="px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-950 hover:opacity-90">
+          🌐 HU / EN
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Layout Plans Grid -->
+    <div id="plansGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"></div>
+  </div>
+
+  <script>
+    const PAINTS = {
+      ceramic: {
+        bodyTop: "#f1f3f6",
+        bodyMid: "#dfe3ea",
+        bodyBot: "#c3cad6",
+        pillar: "#d1d5db",
+        roof: "#1e293b",
+        accent: "#dc2626"
+      },
+      soulred: {
+        bodyTop: "#d92638",
+        bodyMid: "#b01526",
+        bodyBot: "#7a0c19",
+        pillar: "#cbd5e1",
+        roof: "#18181b",
+        accent: "#dc2626"
+      },
+      polymetal: {
+        bodyTop: "#8391a3",
+        bodyMid: "#627082",
+        bodyBot: "#455160",
+        pillar: "#d1d5db",
+        roof: "#18181b",
+        accent: "#0284c7"
+      }
+    };
+
+    const TEXT = {
+      hu: {
+        studioTitle: "Mazda MX-30 — 3 Apple iOS Light Elrendezési Terv",
+        studioSubtitle: "Kattints bármelyik gombra a telefonokon belül az élő működés (fényszóró, előfűtés, zár, töltés, fülek) megtekintéséhez.",
+        planATitle: "Terv A — Cupertino Pure Glass",
+        planADesc: "Minimalista fehér stúdió háttér, középen az MX-30, alul 4 légies üveggomb és karcsú klímasáv.",
+        planBTitle: "Terv B — iOS 18 Control Center Bento",
+        planBDesc: "Lágy kártyás elrendezés, központi ajtó/ablak állapotjelzők a kocsi körül, alul gyorsindító csempék.",
+        planCTitle: "Terv C — Dynamic Island + Füles Panel",
+        planCDesc: "Felső Dynamic Island élő állapotsáv, az autó két oldalán lebegő gombok, alul lehúzható iOS fülek.",
+        home: "Otthon",
+        locked: "Zárva",
+        unlocked: "Nyitva",
+        plugged: "Bedugva",
+        charging: "Töltés",
+        preheat: "Előfűtés",
+        climateOn: "Klíma BE",
+        lockBtn: "Zárás",
+        unlockBtn: "Nyitás",
+        chargeBtn: "Töltés",
+        flashBtn: "Villogás",
+        nextActionTitle: "Következő teendő",
+        nextActionOk: "Minden zárva • Fagyveszély (2°C)",
+        nextActionUnlocked: "Az autó nyitva maradt!",
+        cabin: "Utastér",
+        target: "Célhőfok",
+        weather: "Kint",
+        frost: "Fagyveszély",
+        sendPoi: "Küldés autóba",
+        skipNext: "Holnap kihagy",
+        skipped: "Kihagyva ✓",
+        tabControl: "Vezérlés",
+        tabSchedule: "Előfűtés Pro",
+        tabTrips: "Útnapló",
+        doorsOk: "Ajtók & Ablakok OK",
+        holidaySkip: "Munkaszüneti napok kihagyva",
+        weekly: "Heti: 69 km • 16.9 kWh/100"
+      },
+      en: {
+        studioTitle: "Mazda MX-30 — 3 Apple iOS Light Layout Plans",
+        studioSubtitle: "Click any control inside the phone mockups below to preview live states (lights, climate waves, locks, charging, tabs).",
+        planATitle: "Plan A — Cupertino Pure Glass",
+        planADesc: "Minimal pearl-white studio background, MX-30 hero stage, 4 airy glass buttons & slim climate capsule.",
+        planBTitle: "Plan B — iOS 18 Control Center Bento",
+        planBDesc: "Soft squircle cards, spatial door/window pills around the MX-30, and clean iOS Bento control tiles.",
+        planCTitle: "Plan C — Dynamic Island + Segmented Sheet",
+        planCDesc: "Top Dynamic Island live pill, side floating buttons around the car, and interactive bottom iOS sheet tabs.",
+        home: "Home",
+        locked: "Locked",
+        unlocked: "Unlocked",
+        plugged: "Plugged in",
+        charging: "Charging",
+        preheat: "Pre-Heat",
+        climateOn: "Climate ON",
+        lockBtn: "Lock",
+        unlockBtn: "Unlock",
+        chargeBtn: "Charge",
+        flashBtn: "Flash",
+        nextActionTitle: "Next Action",
+        nextActionOk: "All locked • Frost alert (2°C)",
+        nextActionUnlocked: "Vehicle is unlocked!",
+        cabin: "Cabin",
+        target: "Target",
+        weather: "Outside",
+        frost: "Frost Alert",
+        sendPoi: "Send POI",
+        skipNext: "Skip Next",
+        skipped: "Skipped ✓",
+        tabControl: "Controls",
+        tabSchedule: "Pre-Heat Pro",
+        tabTrips: "Trips",
+        doorsOk: "Doors & Windows OK",
+        holidaySkip: "Hungarian holidays auto-skipped",
+        weekly: "Weekly: 69 km • 16.9 kWh/100"
+      }
+    };
+
+    const appState = {
+      view: "all",
+      paint: "ceramic",
+      lang: "hu",
+      soc: 78,
+      rangeKm: 164,
+      kwh: 23.4,
+      locked: true,
+      hvacOn: false,
+      charging: false,
+      flashOn: false,
+      targetTemp: 21.0,
+      cabinTemp: 14.5,
+      skipNext: false,
+      planCTab: "control"
+    };
+
+    function renderMx30Svg(uid) {
+      const p = PAINTS[appState.paint];
+      const glowLights = appState.flashOn || appState.hvacOn;
+      const flashCls = appState.flashOn ? "anim-flash" : "";
+      const hvacCls = appState.hvacOn ? "anim-pulse-glow" : "";
+      return `
+        <svg viewBox="0 0 360 170" class="w-full h-auto select-none" aria-label="Mazda MX-30">
+          <defs>
+            <linearGradient id="bodyGrad-${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="${p.bodyTop}"/>
+              <stop offset="52%" stop-color="${p.bodyMid}"/>
+              <stop offset="100%" stop-color="${p.bodyBot}"/>
+            </linearGradient>
+            <linearGradient id="glassGrad-${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#334155"/>
+              <stop offset="60%" stop-color="#1e293b"/>
+              <stop offset="100%" stop-color="#0f172a"/>
+            </linearGradient>
+            <radialGradient id="headlightCone-${uid}" cx="0%" cy="50%" r="100%">
+              <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="chargeGlow-${uid}" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#22c55e" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <ellipse cx="180" cy="148" rx="146" ry="11" fill="rgba(15, 23, 42, 0.16)" />
+          <ellipse cx="180" cy="146" rx="118" ry="6" fill="rgba(15, 23, 42, 0.12)" />
+
+          ${appState.charging ? `<ellipse cx="294" cy="92" rx="34" ry="20" fill="url(#chargeGlow-${uid})" class="anim-pulse-glow" />` : ""}
+          ${glowLights ? `<polygon points="36,99 2,86 2,116" fill="url(#headlightCone-${uid})" class="${flashCls}" />` : ""}
+
+          <path d="M98,64 C118,38 162,33 218,34 C252,35 280,48 302,68 L286,70 L102,68 Z" fill="${p.roof}" />
+          <path d="M108,65 C124,42 164,37 220,38 C252,39 276,50 296,67 L289,69 C272,54 248,44 218,43 C166,42 130,47 115,67 Z" fill="${p.pillar}" />
+          <path d="M36,102 C35,88 46,77 74,71 L104,64 L294,65 C312,68 325,80 328,96 L331,118 C331,126 325,131 314,132 L292,132 C292,107 248,107 248,132 L116,132 C116,107 72,107 72,132 L46,132 C38,131 34,124 34,114 Z" fill="url(#bodyGrad-${uid})" stroke="rgba(15,23,42,0.12)" stroke-width="0.8" />
+
+          <path d="M114,65 C132,48 166,44 206,44 L206,66 L112,67 Z" fill="url(#glassGrad-${uid})" />
+          <path d="M212,44 C244,45 266,53 283,66 L212,66 Z" fill="url(#glassGrad-${uid})" />
+
+          ${appState.hvacOn ? `
+            <path d="M118,64 C135,49 166,46 204,46 L204,64 Z" fill="rgba(251, 146, 60, 0.5)" class="${hvacCls}" />
+            <path d="M214,46 C242,47 262,54 278,64 L214,64 Z" fill="rgba(251, 146, 60, 0.45)" class="${hvacCls}" />
+          ` : ""}
+
+          <line x1="208" y1="67" x2="205" y2="128" stroke="rgba(15,23,42,0.18)" stroke-width="1" />
+          <line x1="128" y1="69" x2="126" y2="128" stroke="rgba(15,23,42,0.14)" stroke-width="0.9" />
+          <path d="M118,93 C168,89 224,90 282,88" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" />
+          <rect x="180" y="83" width="12" height="3" rx="1.5" fill="rgba(15,23,42,0.35)" />
+
+          <path d="M34,116 L54,116 C56,96 130,96 132,118 L132,133 L232,133 L232,118 C234,96 308,96 310,118 L328,118 L326,129 L304,132 L292,132 C292,107 248,107 248,132 L116,132 C116,107 72,107 72,132 L42,132 Z" fill="#1e293b" />
+          <path d="M126,69 L139,67 L142,74 L126,75 Z" fill="#0f172a" />
+          <path d="M38,91 C48,87 60,86 68,90 C61,95 48,96 38,94 Z" fill="${glowLights ? "#fef08a" : "#e2e8f0"}" class="${flashCls}" />
+          <path d="M318,82 C325,83 329,88 329,94 L314,91 Z" fill="${appState.flashOn ? "#ff3b30" : "#ef4444"}" class="${flashCls}" />
+          <rect x="288" y="84" width="14" height="10" rx="2" fill="rgba(15,23,42,0.18)" stroke="rgba(255,255,255,0.4)" stroke-width="0.6" />
+          ${appState.charging ? `<circle cx="295" cy="89" r="3" fill="#22c55e" class="anim-pulse-glow" />` : ""}
+
+          ${[94, 270].map((cx) => `
+            <g transform="translate(${cx}, 126)">
+              <circle r="22" fill="#0f172a" />
+              <circle r="15.5" fill="#cbd5e1" stroke="#64748b" stroke-width="1" />
+              <circle r="12" fill="#334155" />
+              <path d="M0,-13 L2,-2 L13,0 L2,2 L0,13 L-2,2 L-13,0 L-2,-2 Z" fill="#f1f5f9" />
+              <circle r="3.2" fill="#0f172a" />
+            </g>
+          `).join("")}
+        </svg>
+      `;
+    }
+
+    function pillBtnClass(active, activeColor = "bg-slate-900 text-white border-slate-900") {
+      return active ? `${activeColor} shadow-md transition active:scale-95` : `ios-pill-btn text-slate-800`;
+    }
+
+    function renderPlanA(t) {
+      return `
+        <div class="space-y-3">
+          <div>
+            <h2 class="text-sm font-bold">${t.planATitle}</h2>
+            <p class="text-xs text-slate-400">${t.planADesc}</p>
+          </div>
+          <div class="phone-shell max-w-[360px] mx-auto">
+            <div class="phone-screen-a p-4 text-slate-900 space-y-3.5">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700 px-1">
+                <span>09:41</span>
+                <div class="w-20 h-4 rounded-full bg-slate-900"></div>
+                <span>5G • ${appState.soc}%</span>
+              </div>
+              <div class="flex items-start justify-between pt-1">
+                <div>
+                  <div class="text-xs font-medium text-slate-500">📍 ${t.home} • ${appState.locked ? t.locked : t.unlocked}</div>
+                  <div class="text-lg font-extrabold tracking-tight text-slate-900">Mazda MX-30</div>
+                </div>
+                <span class="ios-glass px-2.5 py-1 rounded-full text-xs font-semibold text-slate-700">🌤 4°C</span>
+              </div>
+              <div class="ios-glass rounded-2xl p-3">
+                <div class="flex items-baseline justify-between">
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-3xl font-extrabold tracking-tight">${appState.soc}%</span>
+                    <span class="text-xs font-semibold text-slate-500">${appState.kwh} kWh</span>
+                  </div>
+                  <span class="text-sm font-bold text-sky-600">${appState.rangeKm} km</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-200/80 overflow-hidden mt-2">
+                  <div class="h-full rounded-full" style="width:${appState.soc}%; background: linear-gradient(90deg,#22c55e,#0ea5e9)"></div>
+                </div>
+              </div>
+              <div class="relative py-2">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="ios-glass px-2.5 py-1 rounded-full font-semibold text-slate-700">${appState.locked ? "🔒 " + t.locked : "🔓 " + t.unlocked}</span>
+                  <span class="ios-glass px-2.5 py-1 rounded-full font-semibold ${appState.hvacOn ? "text-orange-600" : "text-slate-700"}">🌡 ${appState.hvacOn ? appState.targetTemp.toFixed(1) : appState.cabinTemp}°C</span>
+                </div>
+                ${renderMx30Svg("A")}
+                <div class="flex justify-center gap-2 mt-1">
+                  <span class="ios-glass px-2.5 py-0.5 rounded-full text-xs font-medium text-slate-600">🔌 ${appState.charging ? t.charging + " 6.6 kW" : t.plugged}</span>
+                  <span class="ios-glass px-2.5 py-0.5 rounded-full text-xs font-medium text-slate-600">2.5 bar</span>
+                </div>
+              </div>
+              <div class="grid grid-cols-4 gap-2">
+                <button onclick="toggleLock()" class="${pillBtnClass(!appState.locked, "bg-amber-500 text-white border-amber-500")} rounded-2xl py-2.5 flex flex-col items-center gap-1">
+                  <span class="text-base">${appState.locked ? "🔒" : "🔓"}</span>
+                  <span class="text-xs font-semibold">${appState.locked ? t.lockBtn : t.unlockBtn}</span>
+                </button>
+                <button onclick="toggleHvac()" class="${pillBtnClass(appState.hvacOn, "bg-rose-600 text-white border-rose-600")} rounded-2xl py-2.5 flex flex-col items-center gap-1">
+                  <span class="text-base">🔥</span>
+                  <span class="text-xs font-semibold">${appState.hvacOn ? t.climateOn : t.preheat}</span>
+                </button>
+                <button onclick="toggleCharge()" class="${pillBtnClass(appState.charging, "bg-emerald-600 text-white border-emerald-600")} rounded-2xl py-2.5 flex flex-col items-center gap-1">
+                  <span class="text-base">⚡</span>
+                  <span class="text-xs font-semibold">${t.chargeBtn}</span>
+                </button>
+                <button onclick="toggleFlash()" class="${pillBtnClass(appState.flashOn, "bg-sky-600 text-white border-sky-600")} rounded-2xl py-2.5 flex flex-col items-center gap-1">
+                  <span class="text-base">🚨</span>
+                  <span class="text-xs font-semibold">${t.flashBtn}</span>
+                </button>
+              </div>
+              <div class="ios-glass rounded-2xl p-2.5 flex items-center justify-between">
+                <button onclick="stepTemp(-0.5)" class="w-8 h-8 rounded-full bg-white shadow-sm font-bold text-slate-800">−</button>
+                <div class="text-center">
+                  <div class="text-xs text-slate-500">${t.target}</div>
+                  <div class="text-sm font-extrabold text-slate-900">${appState.targetTemp.toFixed(1)}°C</div>
+                </div>
+                <button onclick="stepTemp(0.5)" class="w-8 h-8 rounded-full bg-white shadow-sm font-bold text-slate-800">+</button>
+              </div>
+              <div class="ios-glass rounded-2xl px-3 py-2 flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700">${appState.locked ? "✓ " + t.nextActionOk : "⚠ " + t.nextActionUnlocked}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPlanB(t) {
+      return `
+        <div class="space-y-3">
+          <div>
+            <h2 class="text-sm font-bold">${t.planBTitle}</h2>
+            <p class="text-xs text-slate-400">${t.planBDesc}</p>
+          </div>
+          <div class="phone-shell max-w-[360px] mx-auto">
+            <div class="phone-screen-b p-4 text-slate-900 space-y-3">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700 px-1">
+                <span>09:41</span>
+                <div class="w-20 h-4 rounded-full bg-slate-900"></div>
+                <span>5G • ${appState.soc}%</span>
+              </div>
+              <div class="ios-glass rounded-2xl px-3.5 py-2.5 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold uppercase tracking-wide ${appState.locked ? "text-emerald-700" : "text-amber-600"}">${t.nextActionTitle}</div>
+                  <div class="text-xs font-semibold text-slate-800">${appState.locked ? t.nextActionOk : t.nextActionUnlocked}</div>
+                </div>
+                <span class="text-lg">${appState.locked ? "🛡️" : "🔓"}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="ios-glass rounded-3xl p-3">
+                  <div class="text-xs text-slate-500 font-medium">MX-30 • ${t.home}</div>
+                  <div class="text-2xl font-extrabold text-slate-900 mt-0.5">${appState.soc}%</div>
+                  <div class="text-xs font-bold text-sky-600">${appState.rangeKm} km • ${appState.kwh} kWh</div>
+                </div>
+                <div class="ios-glass rounded-3xl p-3">
+                  <div class="text-xs text-slate-500 font-medium">${t.weather}</div>
+                  <div class="text-2xl font-extrabold text-slate-900 mt-0.5">2.0°C</div>
+                  <div class="text-xs font-semibold text-sky-700">❄ ${t.frost}</div>
+                </div>
+              </div>
+              <div class="ios-glass rounded-3xl p-3 relative">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">${t.doorsOk}</span>
+                  <span class="text-slate-500 font-semibold">${t.cabin}: ${appState.cabinTemp}°C</span>
+                </div>
+                ${renderMx30Svg("B")}
+              </div>
+              <div class="ios-glass rounded-3xl p-3 flex items-center justify-between gap-2">
+                <div>
+                  <div class="text-xs font-bold text-slate-800">${appState.hvacOn ? t.climateOn : t.preheat} • ${appState.targetTemp.toFixed(1)}°C</div>
+                  <div class="text-xs text-slate-500">${t.holidaySkip}</div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="stepTemp(-0.5)" class="w-8 h-8 rounded-full bg-white shadow text-sm font-bold">−</button>
+                  <button onclick="stepTemp(0.5)" class="w-8 h-8 rounded-full bg-white shadow text-sm font-bold">+</button>
+                  <button onclick="toggleHvac()" class="px-3 py-2 rounded-2xl text-xs font-bold ${appState.hvacOn ? "bg-rose-600 text-white" : "bg-slate-900 text-white"}">${appState.hvacOn ? "ON" : "GO"}</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="toggleLock()" class="${pillBtnClass(!appState.locked, "bg-amber-500 text-white border-amber-500")} rounded-2xl p-2.5 text-left flex items-center gap-2">
+                  <span>${appState.locked ? "🔒" : "🔓"}</span>
+                  <span class="text-xs font-bold">${appState.locked ? t.lockBtn : t.unlockBtn}</span>
+                </button>
+                <button onclick="toggleCharge()" class="${pillBtnClass(appState.charging, "bg-emerald-600 text-white border-emerald-600")} rounded-2xl p-2.5 text-left flex items-center gap-2">
+                  <span>⚡</span>
+                  <span class="text-xs font-bold">${appState.charging ? t.charging : t.chargeBtn}</span>
+                </button>
+                <button onclick="toggleSkipNext()" class="${pillBtnClass(appState.skipNext, "bg-sky-600 text-white border-sky-600")} rounded-2xl p-2.5 text-left flex items-center gap-2">
+                  <span>⏭</span>
+                  <span class="text-xs font-bold">${appState.skipNext ? t.skipped : t.skipNext}</span>
+                </button>
+                <button onclick="toggleFlash()" class="${pillBtnClass(appState.flashOn, "bg-rose-600 text-white border-rose-600")} rounded-2xl p-2.5 text-left flex items-center gap-2">
+                  <span>📍</span>
+                  <span class="text-xs font-bold">${t.sendPoi}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPlanC(t) {
+      let sheetBody = "";
+      if (appState.planCTab === "control") {
+        sheetBody = `
+          <div class="grid grid-cols-2 gap-2 mt-2.5">
+            <button onclick="toggleHvac()" class="${pillBtnClass(appState.hvacOn, "bg-rose-600 text-white border-rose-600")} rounded-2xl p-3 flex items-center justify-between">
+              <span class="text-xs font-bold">🔥 ${t.preheat}</span>
+              <span class="text-xs font-bold">${appState.targetTemp.toFixed(0)}°C</span>
+            </button>
+            <button onclick="toggleLock()" class="${pillBtnClass(!appState.locked, "bg-amber-500 text-white border-amber-500")} rounded-2xl p-3 flex items-center justify-between">
+              <span class="text-xs font-bold">${appState.locked ? "🔒 " + t.locked : "🔓 " + t.unlocked}</span>
+            </button>
+            <button onclick="toggleCharge()" class="${pillBtnClass(appState.charging, "bg-emerald-600 text-white border-emerald-600")} rounded-2xl p-3 flex items-center justify-between">
+              <span class="text-xs font-bold">⚡ ${t.chargeBtn}</span>
+              <span class="text-xs">${appState.charging ? "6.6kW" : "Ready"}</span>
+            </button>
+            <button onclick="toggleFlash()" class="${pillBtnClass(appState.flashOn, "bg-sky-600 text-white border-sky-600")} rounded-2xl p-3 flex items-center justify-between">
+              <span class="text-xs font-bold">🚨 ${t.flashBtn}</span>
+            </button>
+          </div>
+        `;
+      } else if (appState.planCTab === "schedule") {
+        sheetBody = `
+          <div class="mt-2.5 space-y-2">
+            <div class="bg-white/90 rounded-2xl p-2.5 flex items-center justify-between border border-slate-200/70">
+              <div>
+                <div class="text-xs font-bold text-slate-900">07:15 • ${t.target} ${appState.targetTemp.toFixed(0)}°C</div>
+                <div class="text-xs text-slate-500">${t.holidaySkip}</div>
+              </div>
+              <button onclick="toggleSkipNext()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold ${appState.skipNext ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-800"}">
+                ${appState.skipNext ? t.skipped : t.skipNext}
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        sheetBody = `
+          <div class="mt-2.5 space-y-1.5 text-xs">
+            <div class="bg-white/90 rounded-2xl p-2.5 border border-slate-200/70 font-semibold text-slate-800">${t.weekly}</div>
+            <div class="bg-white/90 rounded-2xl p-2.5 border border-slate-200/70 flex justify-between text-slate-700">
+              <span>${t.home} → Munkahely</span>
+              <span class="font-bold">19 km • 3.3 kWh</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="space-y-3">
+          <div>
+            <h2 class="text-sm font-bold">${t.planCTitle}</h2>
+            <p class="text-xs text-slate-400">${t.planCDesc}</p>
+          </div>
+          <div class="phone-shell max-w-[360px] mx-auto">
+            <div class="phone-screen-c p-4 text-slate-900 space-y-3">
+              <div class="flex justify-center pt-1">
+                <div class="px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center gap-2.5 shadow-lg">
+                  <span>${appState.hvacOn ? "🔥" : appState.charging ? "⚡" : "🚘"}</span>
+                  <span>${appState.hvacOn ? `${t.climateOn} • ${appState.targetTemp.toFixed(1)}°C` : `MX-30 • ${appState.soc}% (${appState.rangeKm} km)`}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between px-1">
+                <div>
+                  <div class="text-base font-extrabold text-slate-900">Mazda MX-30</div>
+                  <div class="text-xs text-slate-500">📍 ${t.home} • ${appState.kwh} / 30 kWh</div>
+                </div>
+                <span class="ios-glass px-2.5 py-1 rounded-full text-xs font-semibold text-sky-700">❄ 2°C</span>
+              </div>
+              <div class="relative flex items-center gap-1.5 py-1">
+                <div class="flex flex-col gap-2 z-10">
+                  <button onclick="toggleLock()" class="${pillBtnClass(!appState.locked, "bg-amber-500 text-white")} w-10 h-10 rounded-full flex items-center justify-center text-sm">${appState.locked ? "🔒" : "🔓"}</button>
+                  <button onclick="toggleHvac()" class="${pillBtnClass(appState.hvacOn, "bg-rose-600 text-white")} w-10 h-10 rounded-full flex items-center justify-center text-sm">🔥</button>
+                </div>
+                <div class="flex-1">${renderMx30Svg("C")}</div>
+                <div class="flex flex-col gap-2 z-10">
+                  <button onclick="toggleCharge()" class="${pillBtnClass(appState.charging, "bg-emerald-600 text-white")} w-10 h-10 rounded-full flex items-center justify-center text-sm">⚡</button>
+                  <button onclick="toggleFlash()" class="${pillBtnClass(appState.flashOn, "bg-sky-600 text-white")} w-10 h-10 rounded-full flex items-center justify-center text-sm">🚨</button>
+                </div>
+              </div>
+              <div class="flex justify-around text-xs text-slate-500 font-medium">
+                <span>2.5 bar</span><span>•</span><span>2.5 bar</span>
+              </div>
+              <div class="ios-glass rounded-3xl p-3">
+                <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-200/75 text-xs font-semibold">
+                  <button onclick="setPlanCTab('control')" class="py-1.5 rounded-lg transition ${appState.planCTab === "control" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"}">${t.tabControl}</button>
+                  <button onclick="setPlanCTab('schedule')" class="py-1.5 rounded-lg transition ${appState.planCTab === "schedule" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"}">${t.tabSchedule}</button>
+                  <button onclick="setPlanCTab('trips')" class="py-1.5 rounded-lg transition ${appState.planCTab === "trips" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"}">${t.tabTrips}</button>
+                </div>
+                ${sheetBody}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const t = TEXT[appState.lang];
+      document.getElementById("studioTitle").textContent = t.studioTitle;
+      document.getElementById("studioSubtitle").textContent = t.studioSubtitle;
+
+      ["all", "A", "B", "C"].forEach((v) => {
+        const el = document.getElementById(`view-${v}`);
+        el.className = appState.view === v
+          ? "px-3 py-1.5 rounded-lg font-semibold bg-rose-600 text-white"
+          : "px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white";
+      });
+
+      ["ceramic", "soulred", "polymetal"].forEach((p) => {
+        const el = document.getElementById(`paint-${p}`);
+        el.className = appState.paint === p
+          ? "px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-semibold bg-slate-900 border border-slate-700 text-white"
+          : "px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-medium text-slate-400";
+      });
+
+      const grid = document.getElementById("plansGrid");
+      if (appState.view === "all") {
+        grid.className = "grid grid-cols-1 lg:grid-cols-3 gap-6 items-start";
+        grid.innerHTML = renderPlanA(t) + renderPlanB(t) + renderPlanC(t);
+      } else {
+        grid.className = "grid grid-cols-1 max-w-md mx-auto gap-6";
+        grid.innerHTML = appState.view === "A" ? renderPlanA(t) : appState.view === "B" ? renderPlanB(t) : renderPlanC(t);
+      }
+    }
+
+    function setView(v) { appState.view = v; render(); }
+    function setPaint(p) { appState.paint = p; render(); }
+    function toggleLang() { appState.lang = appState.lang === "hu" ? "en" : "hu"; render(); }
+    function toggleLock() { appState.locked = !appState.locked; render(); }
+    function toggleHvac() { appState.hvacOn = !appState.hvacOn; render(); }
+    function toggleCharge() { appState.charging = !appState.charging; render(); }
+    function toggleFlash() { appState.flashOn = !appState.flashOn; render(); }
+    function toggleSkipNext() { appState.skipNext = !appState.skipNext; render(); }
+    function setPlanCTab(tab) { appState.planCTab = tab; render(); }
+    function stepTemp(delta) {
+      appState.targetTemp = Math.max(16, Math.min(28, appState.targetTemp + delta));
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
