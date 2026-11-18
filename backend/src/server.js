@@ -25,7 +25,7 @@ const manager = new MazdaCompanionManager(db);
 const ALLOWED_ORIGINS = new Set(
   (
     process.env.ALLOWED_ORIGINS ||
-    "https://mx30.g-family.uk,http://localhost:3080"
+    "http://localhost:3080"
   )
     .split(",")
     .map((o) => o.trim())

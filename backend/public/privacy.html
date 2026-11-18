@@ -30,7 +30,7 @@
 <body>
   <div class="wrap">
     <h1>Privacy Policy — Mazda MX-30 Companion</h1>
-    <p>Effective date: November 18, 2026 • Service URL: <a href="https://mx30.g-family.uk">https://mx30.g-family.uk</a></p>
+    <p>Effective date: November 18, 2026 • Service: <span id="svcOrigin">MX-30 Companion</span></p>
 
     <h2>1. Data We Collect</h2>
     <ul>
@@ -46,7 +46,11 @@
     <p>You can export your data (JSON/CSV) or permanently delete your account and all encrypted data at any time directly inside the web portal using the <strong>Delete Account</strong> button.</p>
 
     <h2>4. Contact</h2>
-    <p>For support or data inquiries, contact the server administrator at <code>mx30.g-family.uk</code>.</p>
+    <p>For support or data inquiries, contact your server administrator.</p>
   </div>
+  <script>
+    const el = document.getElementById("svcOrigin");
+    if (el && window.location.origin) el.textContent = window.location.origin;
+  </script>
 </body>
 </html>

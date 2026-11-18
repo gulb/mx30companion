@@ -391,6 +391,6 @@ class MX30ApiClient(context: Context) {
         private const val KEY_PASSKEY_COUNTER = "passkey_counter"
         private const val KEY_CACHED_STATUS = "cached_status_json"
         private const val PASSKEY_ALIAS = "mx30_passkey_ec"
-        const val DEFAULT_SERVER_URL = "https://mx30.g-family.uk"
+        const val DEFAULT_SERVER_URL = "https://your-domain.example"
     }
 }
