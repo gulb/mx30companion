@@ -447,10 +447,10 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        TireMiniChip("FL", status.tires.frontLeftBar)
-                        TireMiniChip("FR", status.tires.frontRightBar)
-                        TireMiniChip("RL", status.tires.rearLeftBar)
-                        TireMiniChip("RR", status.tires.rearRightBar)
+                        TireMiniChip(if (isHu) "EB" else "FL", status.tires.frontLeftBar)
+                        TireMiniChip(if (isHu) "EJ" else "FR", status.tires.frontRightBar)
+                        TireMiniChip(if (isHu) "HB" else "RL", status.tires.rearLeftBar)
+                        TireMiniChip(if (isHu) "HJ" else "RR", status.tires.rearRightBar)
                     }
                 }
             }
@@ -583,48 +583,62 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isHu) "ÜTEMEZÉSEK (PRECONDITION & CHARGE)" else "SCHEDULES (PRECONDITION & CHARGE)",
+                            text = if (isHu) "ÜTEMEZÉSEK" else "SCHEDULES",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,
                             color = Slate500
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = { showSchedulesPage = true }) {
-                                Text(
-                                    text = if (isHu) "Beállítás ›" else "Set Schedules ›",
-                                    fontSize = 12.sp,
-                                    color = IosBlue,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            TextButton(onClick = onFlashHazards, enabled = !isBusy) {
-                                Text(
-                                    text = if (isHu) "🚨 Villogtatás" else "🚨 Flash",
-                                    fontSize = 12.sp,
-                                    color = MazdaRose,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+                        TextButton(
+                            onClick = { showSchedulesPage = true },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isHu) "Beállítás ›" else "Set Schedules ›",
+                                fontSize = 12.sp,
+                                color = IosBlue,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
+                    if (status.schedules.isEmpty()) {
+                        Text(
+                            text = if (isHu) "Nincs aktív ütemezés." else "No schedules configured yet.",
+                            fontSize = 12.sp,
+                            color = Slate500
+                        )
+                    }
                     status.schedules.forEach { sched ->
+                        val timeText = if (sched.type == "charge" && sched.endTime.isNotBlank()) {
+                            "${sched.time} → ${sched.endTime}"
+                        } else {
+                            sched.time
+                        }
+                        val detailText = if (sched.type == "charge") {
+                            if (isHu) "⚡ Töltés automatizálás" else "⚡ Charge Automation"
+                        } else {
+                            "🔥 ${sched.targetTempC.toInt()}°C • ${if (sched.skipNext) (if (isHu) "Következő kihagyva" else "Next skipped") else (if (isHu) "Előfűtés" else "Precondition")}"
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text(
-                                    text = "${sched.time} • ${sched.name}",
+                                    text = "$timeText • ${sched.name}",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Slate900
+                                    color = Slate900,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "${sched.targetTempC.toInt()}°C • ${if (sched.skipNext) (if (isHu) "Következő kihagyva" else "Next skipped") else (if (isHu) "Aktív" else "Active")}",
+                                    text = detailText,
                                     fontSize = 11.sp,
-                                    color = if (sched.skipNext) IosAmberText else Slate500
+                                    color = if (sched.skipNext) IosAmberText else Slate500,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                             Switch(
