@@ -3,50 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Privacy Policy — MX-30 Companion</title>
+  <title>Privacy Policy — Mazda MX-30 Companion</title>
   <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-      background: #0b0e14;
-      color: #f4f7fb;
-      line-height: 1.6;
-      padding: 28px 18px;
-    }
-    .wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      background: #141923;
-      border: 1px solid #252f42;
-      border-radius: 18px;
-      padding: 24px;
-    }
-    h1 { margin-top: 0; font-size: 1.4rem; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; background: #0b0e14; color: #f4f7fb; line-height: 1.6; padding: 28px 18px; }
+    .wrap { max-width: 760px; margin: 0 auto; background: #141923; border: 1px solid #252f42; border-radius: 18px; padding: 26px; }
+    h1 { margin-top: 0; font-size: 1.45rem; }
     h2 { font-size: 1rem; color: #38bdf8; margin-top: 20px; }
     p, li { color: #cbd5e1; font-size: 0.92rem; }
-    a { color: #38bdf8; }
+    a { color: #38bdf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid #252f42; font-size: 0.85rem; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Privacy Policy — Mazda MX-30 Companion</h1>
-    <p>Effective date: November 18, 2026 • Service: <span id="svcOrigin">MX-30 Companion</span></p>
+    <p>Effective date: November 18, 2026 • Service: <span id="svcOrigin">Mazda MX-30 Companion</span></p>
 
     <h2>1. Data We Collect</h2>
     <ul>
-      <li><strong>Google Account Identity:</strong> Email address, display name, and Google subject ID used strictly for authentication.</li>
+      <li><strong>Account &amp; Identity:</strong> Google Account email address, display name, and Google Subject ID (`sub`) used strictly for authentication.</li>
       <li><strong>Passkeys (WebAuthn):</strong> Public key credentials stored for passwordless sign-in.</li>
-      <li><strong>Vehicle &amp; Location Data:</strong> MyMazda OAuth2 tokens, vehicle telemetry (battery SoC, range, climate, lock/door status, tire pressures), saved places, schedules, and recorded trip/charge logs.</li>
+      <li><strong>Vehicle &amp; Location Data:</strong> MyMazda OAuth2 tokens, vehicle telemetry (battery SoC, range, climate, lock/door/window status, tire pressures), GPS coordinates (for parked map, local weather, regional public/bank holidays, and saved places), schedules, and recorded trip/charge logs.</li>
     </ul>
 
-    <h2>2. Encryption &amp; Storage</h2>
-    <p>All user profiles, vehicle telemetry, OAuth tokens, and schedules are stored in an isolated per-user vault encrypted with <strong>AES-256-GCM</strong>. No third-party advertising, analytics, or tracking SDKs are used.</p>
+    <h2>2. Encryption &amp; Zero Tracking</h2>
+    <p>All user profiles, vehicle telemetry, OAuth tokens, saved places, and schedules are stored in an isolated per-user vault encrypted at rest with <strong>AES-256-GCM</strong> and transmitted exclusively over <strong>HTTPS/TLS</strong>. No third-party ads, analytics, or tracking SDKs are used.</p>
 
-    <h2>3. Data Control &amp; Account Deletion</h2>
-    <p>You can export your data (JSON/CSV) or permanently delete your account and all encrypted data at any time directly inside the web portal using the <strong>Delete Account</strong> button.</p>
+    <h2>3. Data Export &amp; Account Deletion</h2>
+    <p>You can export your data (CSV/JSON) or permanently delete your account and all encrypted data at any time from the web portal or see <a href="delete-account.html">Delete your account</a>.</p>
 
-    <h2>4. Contact</h2>
-    <p>For support or data inquiries, contact your server administrator.</p>
+    <h2>4. Support &amp; GDPR Contact</h2>
+    <p>Questions, data requests, or support: <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a></p>
+
+    <footer>
+      <a href="/">← Back to Portal</a> ·
+      <a href="privacy.html">Privacy Policy</a> ·
+      <a href="terms.html">Terms of Use</a> ·
+      <a href="delete-account.html">Delete your account</a>
+    </footer>
   </div>
   <script>
     const el = document.getElementById("svcOrigin");

@@ -2,8 +2,10 @@
 
 Use these exact declarations when completing **App content** in Google Play Console for `com.mazda.mx30companion`.
 
-## 1. Privacy Policy URL
-- `https://your-domain.example/privacy.html` (or raw/rendered link to `docs/PRIVACY_POLICY.md`)
+## 1. Play Console URLs
+- **Privacy Policy URL:** `https://your-domain.example/privacy.html`
+- **Delete Account URL:** `https://your-domain.example/delete-account.html`
+- **Support Email:** `mx30Support@gmail.com`
 
 ## 2. Data Safety Overview
 - **Does your app collect or share any of the required user data types?** **Yes** (Collects only; **No** data is shared with third parties).

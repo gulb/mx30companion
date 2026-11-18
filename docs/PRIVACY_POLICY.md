@@ -42,4 +42,4 @@ Under GDPR, you have the right to:
 - **Disconnect Anytime:** You can revoke MyMazda access via **Disconnect** without deleting your account.
 
 ## 6. Contact
-For privacy or GDPR inquiries, please open an issue on the [GitHub repository](https://github.com/gulb/mx30companion) or contact your server administrator.
+For privacy or GDPR inquiries, please email **mx30Support@gmail.com** or open an issue on the [GitHub repository](https://github.com/gulb/mx30companion).
