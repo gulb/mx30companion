@@ -6,6 +6,7 @@ const DATA_DIR = process.env.DATA_DIR || "/app/data";
 const DB_FILE = process.env.ENCRYPTED_DB_FILE || path.join(DATA_DIR, "encrypted_db.json");
 const MASTER_KEY_FILE = process.env.MASTER_KEY_FILE || path.join(DATA_DIR, ".master.key");
 const LEGACY_STORE_FILE = path.join(DATA_DIR, "store.json");
+const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 function hashSha256(value) {
   return crypto.createHash("sha256").update(String(value)).digest("hex");
@@ -452,6 +453,13 @@ class EncryptedDatabase {
     if (!session || !this.index.users[session.userId]) return null;
 
     const nowMs = Date.now();
+    const createdMs = new Date(session.createdAt || 0).getTime();
+    if (!createdMs || nowMs - createdMs > SESSION_TTL_MS) {
+      delete this.index.sessions[tokenHash];
+      this.persistDatabase();
+      return null;
+    }
+
     const lastMs = new Date(session.lastSeenAt || 0).getTime();
     if (nowMs - lastMs > 5 * 60 * 1000) {
       session.lastSeenAt = new Date(nowMs).toISOString();
@@ -465,15 +473,62 @@ class EncryptedDatabase {
     };
   }
 
-  listUserSessions(userId) {
-    return Object.values(this.index.sessions)
-      .filter((s) => s.userId === userId)
-      .map(({ id, deviceName, createdAt, lastSeenAt }) => ({
-        id,
-        deviceName,
-        createdAt,
-        lastSeenAt
-      }));
+  listUserSessions(userId, currentRawToken = "") {
+    const nowMs = Date.now();
+    const currentHash = currentRawToken ? hashSha256(currentRawToken) : "";
+    let pruned = false;
+    const list = [];
+
+    for (const [tokenHash, s] of Object.entries(this.index.sessions)) {
+      if (s.userId !== userId) continue;
+      const createdMs = new Date(s.createdAt || 0).getTime();
+      if (!createdMs || nowMs - createdMs > SESSION_TTL_MS) {
+        delete this.index.sessions[tokenHash];
+        pruned = true;
+        continue;
+      }
+      list.push({
+        id: s.id,
+        deviceName: s.deviceName,
+        createdAt: s.createdAt,
+        lastSeenAt: s.lastSeenAt,
+        isCurrent: Boolean(currentHash && tokenHash === currentHash)
+      });
+    }
+
+    if (pruned) {
+      this.persistDatabase();
+    }
+
+    return list.sort((a, b) => new Date(b.lastSeenAt || 0) - new Date(a.lastSeenAt || 0));
+  }
+
+  revokeSessionById(userId, sessionId) {
+    const targetId = String(sessionId || "").trim();
+    if (!targetId) return false;
+    for (const [tokenHash, s] of Object.entries(this.index.sessions)) {
+      if (s.userId === userId && s.id === targetId) {
+        delete this.index.sessions[tokenHash];
+        this.persistDatabase();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  revokeOtherSessions(userId, keepRawToken = "") {
+    const keepHash = keepRawToken ? hashSha256(keepRawToken) : "";
+    let removed = 0;
+    for (const [tokenHash, s] of Object.entries(this.index.sessions)) {
+      if (s.userId === userId && tokenHash !== keepHash) {
+        delete this.index.sessions[tokenHash];
+        removed += 1;
+      }
+    }
+    if (removed > 0) {
+      this.persistDatabase();
+    }
+    return removed;
   }
 
   revokeSession(rawToken) {

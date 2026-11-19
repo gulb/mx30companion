@@ -36,12 +36,51 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.mazda.mx30companion.ACTION_TOGGLE_HVAC" />
+                <action android:name="com.mazda.mx30companion.ACTION_PREHEAT_ON" />
+                <action android:name="com.mazda.mx30companion.ACTION_CLIMATE_OFF" />
                 <action android:name="com.mazda.mx30companion.ACTION_LOCK_DOORS" />
+                <action android:name="com.mazda.mx30companion.ACTION_TOGGLE_CHARGE" />
                 <action android:name="com.mazda.mx30companion.ACTION_REFRESH" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/mx30_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MX30Widget2x2Provider"
+            android:exported="true"
+            android:label="@string/widget_2x2_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mx30_widget_2x2_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MX30Widget4x3Provider"
+            android:exported="true"
+            android:label="@string/widget_4x3_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mx30_widget_4x3_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MX30Widget4x4Provider"
+            android:exported="true"
+            android:label="@string/widget_4x4_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mx30_widget_4x4_info" />
         </receiver>
 
         <service

@@ -1,45 +1,54 @@
 # Privacy Policy & GDPR Notice — Mazda MX-30 Companion
 
-**Effective Date:** November 18, 2026  
+**Effective Date:** November 19, 2026  
 **Service URL:** https://your-domain.example  
+**Support & GDPR Contact:** `mx30Support@gmail.com`  
 **Repository:** https://github.com/gulb/mx30companion  
+
+> **Unofficial Companion App:** Mazda MX-30 Companion is an independent, unofficial companion project. It is not affiliated with, endorsed by, or supported by Mazda Motor Corporation or Mazda Motor Europe.
 
 ---
 
-## 1. Overview
-Mazda MX-30 Companion ("the App" and "Web Portal") is an unofficial companion application for Mazda MX-30 owners. We are committed to protecting your privacy in accordance with the UK GDPR and EU GDPR.
+## 1. Data We Collect, Purpose & Legal Basis (GDPR)
 
-## 2. Data We Collect & Process
-We process only the minimum data strictly required to provide vehicle telemetry, remote controls, and scheduling:
+| Data Category | Purpose | Legal Basis |
+| --- | --- | --- |
+| **Account Identity (Google Sign-In & Passkeys):** Email address, display name, Google Subject ID (`sub`), WebAuthn Passkey public keys & credential IDs. | Create and secure your isolated account without storing passwords. | Contract — Art. 6(1)(b) |
+| **MyMazda Connection:** Official OAuth2 access & refresh tokens (stored encrypted with AES-256-GCM). Your MyMazda password is **never** seen or stored. | Read vehicle telemetry and execute remote commands / schedules on your behalf. | Contract — Art. 6(1)(b) |
+| **Vehicle & Location Telemetry:** SoC %, range, charging state, odometer, HVAC, locks/doors/windows, tire pressures, GPS position, saved places, Precondition/Charge schedules, trip/charge logs. | Live status, Android widgets, Quick Settings tile, local weather, UK/HU public holiday detection, and schedules. | Contract — Art. 6(1)(b) |
+| **Signed-In Devices & Command Audit Log:** Session token SHA-256 hashes, device name, timestamps, and device attribution in the Timeline (no IP addresses persisted). | Account security — inspect active devices, audit commands, and remotely revoke lost devices. | Legitimate interest — Art. 6(1)(f) |
+| **Server Error Logs:** Masked diagnostic error messages (17-character VINs redacted). | Troubleshooting and service reliability. | Legitimate interest — Art. 6(1)(f) |
 
-1. **Account & Authentication Data**
-   - Email address, display name, and Google Subject ID (`sub`) from Google Sign-In.
-   - WebAuthn Passkey public keys and credential IDs for passwordless authentication.
-   - Active session tokens and device names (for session management and remote logout).
+- **Zero Ads or Trackers:** No advertising SDKs, analytics, or user profiling.
+- **Pause Location Recording:** Can be toggled on/off anytime; when paused, GPS coordinates and trip place labels are not stored.
+- **Privacy-Preserving Weather:** Only coordinates rounded to ~1.1 km (`2 decimal places`) are sent to Open-Meteo, without any user identity.
 
-2. **Vehicle & Telemetry Data (MyMazda Connected Services)**
-   - MyMazda OAuth2 access and refresh tokens (used solely to communicate with Mazda's official API on your behalf).
-   - Vehicle identifier (VIN / vehicle ID), battery state of charge (SoC), range, charging state, odometer, door/window/trunk/hood lock status, tire pressures, and climate/HVAC state.
-   - Recorded real trip summaries and charging sessions (computed from telemetry changes).
+---
 
-3. **Location & Automation Data**
-   - Vehicle GPS coordinates (used to display parked location on the map, fetch local outdoor weather, determine regional public/bank holidays such as UK or Hungary, and match user-defined geofenced places such as *Home* or *Work*).
-   - User-configured Precondition and Charging schedules.
+## 2. Data Processors & Third-Party Recipients
 
-## 3. Legal Basis for Processing (GDPR Art. 6)
-- **Performance of a Service / User Consent (Art. 6(1)(a) & (b)):** All vehicle telemetry, OAuth connection, geofencing, and schedule automation are enabled explicitly by you.
+| Recipient | Purpose | Notes |
+| --- | --- | --- |
+| **Google LLC / Google Ireland Ltd.** | Google Sign-In (`id_token` verification) & Google Play app testing/distribution. No Firebase Analytics. | EU-US DPF / SCC |
+| **Mazda Connected Services (MME / Regional Operator)** | Vehicle telemetry source & remote command execution via your MyMazda OAuth2 tokens. | Independent controller |
+| **Open-Meteo** | Local temperature/frost weather forecast (~1.1 km rounded coordinates, no identity). | EU / Switzerland |
+| **Cloudflare Inc.** | DNS & encrypted HTTPS reverse tunnel to the origin server. | EU-US DPF / SCC |
+| **Self-Hosted Docker Backend** | Stores per-user AES-256-GCM encrypted vaults (`user:<id>` & `data:<id>` AAD). | Administrator-controlled |
 
-## 4. Storage, Encryption & Security
-- **Encryption at Rest:** All user profiles, vehicle telemetry, OAuth tokens, saved places, and schedules are stored in an isolated per-user vault encrypted with **AES-256-GCM** using authenticated encryption (`user:<id>` and `data:<id>` AAD).
-- **Encryption in Transit:** All communication between the Android App, Web Portal, and backend uses **HTTPS / TLS** via Cloudflare & Caddy.
-- **No Ads or Trackers:** The App and Web Portal contain **zero** third-party advertising SDKs, analytics trackers, or behavioral profiling.
-- **12V Battery Protection:** No background periodic vehicle wake-up polling is performed; telemetry refreshes occur only when you manually tap Sync or send a command.
+---
 
-## 5. Data Retention & Your GDPR Rights
-Under GDPR, you have the right to:
-- **Access & Portability (Art. 15 & 20):** Export your trips, charges, and full account data in **CSV** or **JSON** format directly from the Web Portal.
-- **Erasure / "Right to be Forgotten" (Art. 17):** Permanently delete your account, OAuth tokens, Passkeys, and all encrypted data at any time using the **Delete Account** button in the Web Portal. Deletion is immediate and irreversible.
-- **Disconnect Anytime:** You can revoke MyMazda access via **Disconnect** without deleting your account.
+## 3. Data Retention
 
-## 6. Contact
-For privacy or GDPR inquiries, please email **mx30Support@gmail.com** or open an issue on the [GitHub repository](https://github.com/gulb/mx30companion).
+| Item | Retention Period |
+| --- | --- |
+| Account, OAuth tokens, places, schedules & trip/charge logs | Until deleted by you or immediately erased via **Delete Account**. |
+| Device sessions | 90 days max (auto-pruned) or immediately on Logout / Revoke Session. |
+| Chrome Custom Tab one-time exchange codes | 60 seconds (single-use). |
+| WebAuthn Passkey challenges | 5 minutes (single-use). |
+
+---
+
+## 4. Your GDPR Rights
+- **Access & Portability (Art. 15 & 20):** Export CSV (`trips.csv`, `charges.csv`) or full `data.json` anytime from the Web Portal.
+- **Erasure (Art. 17):** Use the **Delete Account** button (`DELETE /api/account`), see `/delete-account.html`, or email **`mx30Support@gmail.com`**.
+- **Supervisory Authorities:** UK ICO (`https://ico.org.uk`) or Hungarian NAIH (`https://naih.hu`).

@@ -19,6 +19,7 @@ const {
 
 const PORT = Number(process.env.PORT) || 3080;
 const app = express();
+app.disable("x-powered-by");
 const db = new EncryptedDatabase();
 const manager = new MazdaCompanionManager(db);
 
@@ -48,6 +49,7 @@ app.use(express.json({ limit: "1mb" }));
 
 // Internet-ready security headers
 app.use((req, res, next) => {
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -87,10 +89,14 @@ const apiRateLimit = createRateLimiter(
 );
 app.use("/api/", apiRateLimit);
 
+function redactSensitiveText(text) {
+  return String(text || "").replace(/\b[A-HJ-NPR-Z0-9]{17}\b/g, "[VIN]");
+}
+
 function wrapAsync(handler) {
   return (req, res) => {
     Promise.resolve(handler(req, res)).catch((err) => {
-      console.error(`${req.method} ${req.path} failed:`, err.message);
+      console.error(`${req.method} ${req.path} failed:`, redactSensitiveText(err.message));
       const statusCode = err.statusCode || 400;
       res.status(statusCode).json({ ok: false, error: err.message });
     });
@@ -102,7 +108,11 @@ function extractBearerToken(req) {
   if (auth.startsWith("Bearer ")) {
     return auth.slice(7).trim();
   }
-  if (typeof req.query.token === "string" && req.query.token.trim()) {
+  if (
+    req.path.startsWith("/api/export/") &&
+    typeof req.query.token === "string" &&
+    req.query.token.trim()
+  ) {
     return req.query.token.trim();
   }
   return "";
@@ -137,6 +147,13 @@ app.post(
   "/api/auth/register",
   authRateLimit,
   wrapAsync(async (req, res) => {
+    if (process.env.ALLOW_PASSWORD_AUTH !== "true") {
+      res.status(410).json({
+        ok: false,
+        error: "Password auth is disabled — sign in with Google or a Passkey."
+      });
+      return;
+    }
     const { email, password, name, lang, deviceName } = req.body || {};
     const user = manager.createUser({ email, password, name, lang });
     const token = db.createSession(
@@ -151,6 +168,13 @@ app.post(
   "/api/auth/login",
   authRateLimit,
   wrapAsync(async (req, res) => {
+    if (process.env.ALLOW_PASSWORD_AUTH !== "true") {
+      res.status(410).json({
+        ok: false,
+        error: "Password auth is disabled — sign in with Google or a Passkey."
+      });
+      return;
+    }
     const { email, password, deviceName } = req.body || {};
     const user = db.authenticateUser({ email, password });
     const token = db.createSession(
@@ -336,7 +360,35 @@ app.get("/api/auth/me", requireAuth, (req, res) => {
     ok: true,
     user: req.user,
     passkeys: db.listPasskeys(req.user.id),
-    devices: db.listUserSessions(req.user.id)
+    devices: db.listUserSessions(req.user.id, req.authToken)
+  });
+});
+
+app.get("/api/auth/sessions", requireAuth, (req, res) => {
+  res.json({
+    ok: true,
+    devices: db.listUserSessions(req.user.id, req.authToken)
+  });
+});
+
+app.delete("/api/auth/sessions/:id", requireAuth, (req, res) => {
+  const revoked = db.revokeSessionById(req.user.id, req.params.id);
+  if (!revoked) {
+    res.status(404).json({ ok: false, error: "Session not found" });
+    return;
+  }
+  res.json({
+    ok: true,
+    devices: db.listUserSessions(req.user.id, req.authToken)
+  });
+});
+
+app.post("/api/auth/logout-all", requireAuth, (req, res) => {
+  const revoked = db.revokeOtherSessions(req.user.id, req.authToken);
+  res.json({
+    ok: true,
+    revoked,
+    devices: db.listUserSessions(req.user.id, req.authToken)
   });
 });
 
@@ -378,7 +430,7 @@ app.post(
   "/api/hvac/toggle",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.toggleHvac("user");
+    const status = await req.client.toggleHvac("user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -391,7 +443,8 @@ app.post(
     const status = await req.client.setHvacPower(
       true,
       { targetTempC, frontDefroster, rearDefroster },
-      "user"
+      "user",
+      req.session?.deviceName || ""
     );
     res.json(status);
   })
@@ -401,7 +454,7 @@ app.post(
   "/api/hvac/off",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.setHvacPower(false, {}, "user");
+    const status = await req.client.setHvacPower(false, {}, "user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -413,7 +466,8 @@ app.post(
     const { targetTempC, frontDefroster, rearDefroster } = req.body || {};
     const status = await req.client.setHvacSettings(
       { targetTempC, frontDefroster, rearDefroster },
-      "user"
+      "user",
+      req.session?.deviceName || ""
     );
     res.json(status);
   })
@@ -423,7 +477,7 @@ app.post(
   "/api/charge/start",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.setCharging(true, "user");
+    const status = await req.client.setCharging(true, "user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -432,7 +486,7 @@ app.post(
   "/api/charge/stop",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.setCharging(false, "user");
+    const status = await req.client.setCharging(false, "user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -441,7 +495,7 @@ app.post(
   "/api/doors/lock",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.setDoorsLocked(true, "user");
+    const status = await req.client.setDoorsLocked(true, "user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -450,7 +504,7 @@ app.post(
   "/api/doors/unlock",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.setDoorsLocked(false, "user");
+    const status = await req.client.setDoorsLocked(false, "user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -459,7 +513,7 @@ app.post(
   "/api/lights/hazard",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const status = await req.client.flashHazardLights("user");
+    const status = await req.client.flashHazardLights("user", req.session?.deviceName || "");
     res.json(status);
   })
 );
@@ -469,7 +523,10 @@ app.post(
   requireAuth,
   wrapAsync(async (req, res) => {
     const { latitude, longitude, name } = req.body || {};
-    const status = await req.client.sendPoi({ latitude, longitude, name });
+    const status = await req.client.sendPoi(
+      { latitude, longitude, name },
+      req.session?.deviceName || ""
+    );
     res.json(status);
   })
 );
@@ -510,8 +567,14 @@ app.post(
   "/api/preferences",
   requireAuth,
   wrapAsync(async (req, res) => {
-    const { lang, capacityKwh, carColor } = req.body || {};
-    const status = await req.client.setPreferences({ lang, capacityKwh, carColor });
+    const { lang, capacityKwh, carColor, pauseLocation, confirmCommands } = req.body || {};
+    const status = await req.client.setPreferences({
+      lang,
+      capacityKwh,
+      carColor,
+      pauseLocation,
+      confirmCommands
+    });
     res.json({ ...status, user: db.getProfile(req.user.id) && { ...req.user, lang: status.lang } });
   })
 );

@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">MX-30 Companion</string>
-    <string name="widget_name">MX-30 Status &amp; Controls</string>
-    <string name="widget_description">Live battery %, EV range, cabin temperature, and 1-tap climate &amp; door lock controls for your Mazda MX-30.</string>
+    <string name="widget_name">MX-30 Car &amp; Controls (4×2)</string>
+    <string name="widget_description">Car photo, battery %, EV range, cabin temperature, and 4 quick control buttons.</string>
+    <string name="widget_2x2_name">MX-30 Battery Ring (2×2)</string>
+    <string name="widget_2x2_description">Compact circular battery percentage ring and EV range.</string>
+    <string name="widget_4x3_name">MX-30 Status Grid (4×3)</string>
+    <string name="widget_4x3_description">6-tile vehicle overview showing lock, battery, charging, climate, location, and schedule status.</string>
+    <string name="widget_4x4_name">MX-30 Full Hero &amp; Actions (4×4)</string>
+    <string name="widget_4x4_description">Large MX-30 photo, key telemetry cards, and 5 quick command buttons.</string>
     <string name="tile_climate_label">MX-30 Climate</string>
 </resources>

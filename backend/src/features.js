@@ -219,9 +219,10 @@ async function fetchOutdoorWeather(lat, lon, lang = "hu", fallbackWeather = null
   }
 
   try {
+    // Round coordinates to ~1.1 km (2 decimal places) so Open-Meteo never sees exact parked address
     const url =
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}` +
-      `&longitude=${lon.toFixed(4)}&current=temperature_2m,weather_code,wind_speed_10m` +
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}` +
+      `&longitude=${lon.toFixed(2)}&current=temperature_2m,weather_code,wind_speed_10m` +
       `&daily=temperature_2m_min,temperature_2m_max&timezone=auto`;
     const res = await fetch(url, { signal: AbortSignal.timeout(4500) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -409,6 +410,8 @@ function detectTripOrCharge(prevSnapshot, state) {
 
   // Trip detection: odometer moved >= 1 km
   if (odoDelta >= 1) {
+    const locationPaused = Boolean(state.privacy?.pauseLocation);
+    const privateLabel = state.lang === "hu" ? "Privát" : "Private";
     const socUsed = Math.max(0, prevSnapshot.socPercent - state.battery.socPercent);
     const kwhUsed = Number(((socUsed / 100) * capacity).toFixed(2));
     const eff = odoDelta > 0 ? Number(((kwhUsed / odoDelta) * 100).toFixed(1)) : 0;
@@ -416,8 +419,8 @@ function detectTripOrCharge(prevSnapshot, state) {
       id: `trip-${Date.now()}`,
       startTime: prevSnapshot.timestamp,
       endTime: new Date().toISOString(),
-      fromPlace: prevSnapshot.place || state.currentPlace,
-      toPlace: state.currentPlace,
+      fromPlace: locationPaused ? privateLabel : (prevSnapshot.place || state.currentPlace),
+      toPlace: locationPaused ? privateLabel : state.currentPlace,
       distanceKm: odoDelta,
       socUsedPercent: socUsed,
       kwhUsed,
@@ -428,6 +431,8 @@ function detectTripOrCharge(prevSnapshot, state) {
 
   // Charge logging: ignore small driving regen spikes unless plugged in
   if (state.battery.pluggedIn && socDelta >= 1) {
+    const locationPaused = Boolean(state.privacy?.pauseLocation);
+    const privateLabel = state.lang === "hu" ? "Privát" : "Private";
     const kwhAdded = Number(((socDelta / 100) * capacity).toFixed(2));
     const latest = state.charges[0];
     const recentSameSession =
@@ -445,7 +450,7 @@ function detectTripOrCharge(prevSnapshot, state) {
         id: `chg-${Date.now()}`,
         timestamp: new Date().toISOString(),
         endTime: new Date().toISOString(),
-        place: state.currentPlace,
+        place: locationPaused ? privateLabel : state.currentPlace,
         startSoc: prevSnapshot.socPercent,
         endSoc: state.battery.socPercent,
         kwhAdded,

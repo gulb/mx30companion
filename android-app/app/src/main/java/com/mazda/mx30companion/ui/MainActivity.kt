@@ -11,6 +11,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
+import com.mazda.mx30companion.data.DeviceSessionItem
 import com.mazda.mx30companion.data.MX30ApiClient
 import com.mazda.mx30companion.data.UnauthorizedException
 import com.mazda.mx30companion.data.VehicleStatus
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
                 var hasLocalPasskey by remember { mutableStateOf(api.hasLocalPasskey()) }
                 var userEmail by remember { mutableStateOf(api.getUserEmail()) }
                 var status by remember { mutableStateOf(api.getCachedStatus()) }
+                var sessions by remember { mutableStateOf<List<DeviceSessionItem>>(emptyList()) }
                 var serverUrl by remember { mutableStateOf(api.getServerUrl()) }
                 var isBusy by remember { mutableStateOf(false) }
                 var errorMsg by remember { mutableStateOf<String?>(null) }
@@ -98,6 +100,7 @@ class MainActivity : ComponentActivity() {
                     hasLocalPasskey = hasLocalPasskey,
                     userEmail = userEmail,
                     status = status,
+                    sessions = sessions,
                     serverUrl = serverUrl,
                     isBusy = isBusy,
                     errorMessage = errorMsg,
@@ -119,6 +122,7 @@ class MainActivity : ComponentActivity() {
                         scope.launch {
                             api.logout()
                             isLoggedIn = false
+                            sessions = emptyList()
                             hasLocalPasskey = api.hasLocalPasskey()
                             errorMsg = null
                         }
@@ -129,6 +133,64 @@ class MainActivity : ComponentActivity() {
                     },
                     onSelectCarColor = { color ->
                         runCommand { api.setPreferences(carColor = color) }
+                    },
+                    onUpdatePrivacy = { pauseLoc, confirmCmd ->
+                        runCommand {
+                            api.setPreferences(
+                                pauseLocation = pauseLoc,
+                                confirmCommands = confirmCmd
+                            )
+                        }
+                    },
+                    onRefreshSessions = {
+                        scope.launch {
+                            try {
+                                sessions = api.fetchSessions()
+                            } catch (e: UnauthorizedException) {
+                                api.clearAuth()
+                                isLoggedIn = false
+                                errorMsg = e.message
+                            } catch (_: Exception) {
+                            }
+                        }
+                    },
+                    onRevokeSession = { sessionId ->
+                        scope.launch {
+                            try {
+                                sessions = api.revokeSession(sessionId)
+                            } catch (e: Exception) {
+                                errorMsg = e.message ?: "Failed to revoke session"
+                            }
+                        }
+                    },
+                    onLogoutOtherDevices = {
+                        scope.launch {
+                            try {
+                                sessions = api.logoutOtherDevices()
+                            } catch (e: Exception) {
+                                errorMsg = e.message ?: "Failed to sign out other devices"
+                            }
+                        }
+                    },
+                    onOpenPrivacyPolicy = {
+                        val privacyUri = Uri.parse("${api.getServerUrl()}/privacy.html")
+                        CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this@MainActivity, privacyUri)
+                    },
+                    onDeleteAccount = {
+                        scope.launch {
+                            isBusy = true
+                            try {
+                                api.deleteAccount()
+                                isLoggedIn = false
+                                sessions = emptyList()
+                                hasLocalPasskey = api.hasLocalPasskey()
+                                errorMsg = null
+                            } catch (e: Exception) {
+                                errorMsg = e.message ?: "Account deletion failed"
+                            } finally {
+                                isBusy = false
+                            }
+                        }
                     },
                     onRefresh = { runCommand { api.fetchStatus(forceRefresh = true) } },
                     onToggleHvac = { runCommand { api.toggleHvac() } },

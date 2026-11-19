@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_4x4_description"
+    android:initialLayout="@layout/widget_mx30_4x4"
+    android:minWidth="250dp"
+    android:minHeight="250dp"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

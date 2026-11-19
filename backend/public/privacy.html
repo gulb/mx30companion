@@ -6,41 +6,109 @@
   <title>Privacy Policy — Mazda MX-30 Companion</title>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; background: #0b0e14; color: #f4f7fb; line-height: 1.6; padding: 28px 18px; }
-    .wrap { max-width: 760px; margin: 0 auto; background: #141923; border: 1px solid #252f42; border-radius: 18px; padding: 26px; }
-    h1 { margin-top: 0; font-size: 1.45rem; }
-    h2 { font-size: 1rem; color: #38bdf8; margin-top: 20px; }
-    p, li { color: #cbd5e1; font-size: 0.92rem; }
+    .wrap { max-width: 860px; margin: 0 auto; background: #141923; border: 1px solid #252f42; border-radius: 18px; padding: 26px; }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    h2 { font-size: 1.05rem; color: #38bdf8; margin-top: 24px; }
+    p, li, td, th { color: #cbd5e1; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #252f42; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: rgba(56, 189, 248, 0.08); color: #f8fafc; font-weight: 600; }
+    .note { background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 12px 14px; margin: 14px 0; font-size: 0.88rem; }
+    .lang { margin: 10px 0 18px; font-weight: 600; }
     a { color: #38bdf8; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid #252f42; font-size: 0.85rem; color: #94a3b8; }
+    footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid #252f42; font-size: 0.85rem; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Privacy Policy — Mazda MX-30 Companion</h1>
-    <p>Effective date: November 18, 2026 • Service: <span id="svcOrigin">Mazda MX-30 Companion</span></p>
+    <p>Effective date: November 19, 2026 • Service: <span id="svcOrigin">Mazda MX-30 Companion</span></p>
+    <p class="lang"><a href="#en">English</a> · <a href="#hu">Magyar</a></p>
 
-    <h2>1. Data We Collect</h2>
-    <ul>
-      <li><strong>Account &amp; Identity:</strong> Google Account email address, display name, and Google Subject ID (`sub`) used strictly for authentication.</li>
-      <li><strong>Passkeys (WebAuthn):</strong> Public key credentials stored for passwordless sign-in.</li>
-      <li><strong>Vehicle &amp; Location Data:</strong> MyMazda OAuth2 tokens, vehicle telemetry (battery SoC, range, climate, lock/door/window status, tire pressures), GPS coordinates (for parked map, local weather, regional public/bank holidays, and saved places), schedules, and recorded trip/charge logs.</li>
-    </ul>
+    <div class="note">
+      <strong>Unofficial companion app.</strong> Not affiliated with, endorsed by, or supported by Mazda Motor Corporation, Mazda Motor Europe, or any affiliates. This app connects to <em>your own</em> MyMazda account via official PKCE OAuth2 — we never see or store your MyMazda password.
+    </div>
 
-    <h2>2. Encryption &amp; Zero Tracking</h2>
-    <p>All user profiles, vehicle telemetry, OAuth tokens, saved places, and schedules are stored in an isolated per-user vault encrypted at rest with <strong>AES-256-GCM</strong> and transmitted exclusively over <strong>HTTPS/TLS</strong>. No third-party ads, analytics, or tracking SDKs are used.</p>
+    <section id="en">
+      <h2>1. Data Controller &amp; Support Contact</h2>
+      <p>Independent developer (UK / EU) • Support &amp; GDPR requests: <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a></p>
 
-    <h2>3. Data Export &amp; Account Deletion</h2>
-    <p>You can export your data (CSV/JSON) or permanently delete your account and all encrypted data at any time from the web portal or see <a href="delete-account.html">Delete your account</a>.</p>
+      <h2>2. What Data We Process, Why &amp; Legal Basis (GDPR)</h2>
+      <table>
+        <tr><th>Data Category</th><th>Purpose</th><th>Legal Basis</th></tr>
+        <tr>
+          <td><strong>Account Identity (Google Sign-In &amp; Passkeys):</strong> Email address, display name, Google Subject ID (<code>sub</code>), WebAuthn Passkey public keys &amp; credential IDs.</td>
+          <td>Create and secure your isolated account without storing passwords.</td>
+          <td>Contract — Art. 6(1)(b)</td>
+        </tr>
+        <tr>
+          <td><strong>MyMazda Connection:</strong> OAuth2 access &amp; refresh tokens returned after you authenticate directly on Mazda's own login domain (encrypted at rest with <strong>AES-256-GCM</strong>). Your MyMazda password is <strong>never</strong> seen or stored.</td>
+          <td>Read vehicle telemetry and send remote commands you request or schedule.</td>
+          <td>Contract — Art. 6(1)(b)</td>
+        </tr>
+        <tr>
+          <td><strong>Vehicle &amp; Location Telemetry:</strong> Battery SoC, range, charging state, odometer, HVAC, doors/windows/locks, tire pressures, GPS position, saved places, Precondition/Charge schedules, and trip/charge logs.</td>
+          <td>Live dashboard, Android widgets, Quick Settings tile, local weather, bank holiday region (UK/HU), and smart schedules.</td>
+          <td>Contract — Art. 6(1)(b)</td>
+        </tr>
+        <tr>
+          <td><strong>Signed-In Devices &amp; Command Audit Log:</strong> Session token hashes (SHA-256), device name, login timestamp, last active time, and which device triggered each command (Timeline). <strong>No IP addresses</strong> are stored in your vault or device audit log.</td>
+          <td>Account security — inspect active devices, trace remote commands, and revoke lost/unrecognized sessions remotely.</td>
+          <td>Legitimate interest — Art. 6(1)(f)</td>
+        </tr>
+        <tr>
+          <td><strong>Server Error Logs:</strong> Masked diagnostic error messages (17-character VINs automatically redacted).</td>
+          <td>Troubleshooting and service stability.</td>
+          <td>Legitimate interest — Art. 6(1)(f)</td>
+        </tr>
+      </table>
 
-    <h2>4. Support &amp; GDPR Contact</h2>
-    <p>Questions, data requests, or support: <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a></p>
+      <p><strong>Other drivers &amp; Privacy Controls:</strong> When <em>Pause location recording</em> is enabled (Web Portal or Android Settings), GPS coordinates and trip place labels are not stored. Enabling <em>Confirm before remote commands</em> prompts before Lock/Climate/Charge actions. We show <strong>zero ads</strong>, use <strong>zero analytics or tracking SDKs</strong>, and never sell data.</p>
+
+      <h2>3. Data Processors &amp; Recipients</h2>
+      <table>
+        <tr><th>Recipient</th><th>Purpose</th><th>Safeguards / Notes</th></tr>
+        <tr><td><strong>Google LLC / Google Ireland Ltd.</strong></td><td>Google Sign-In authentication (OIDC <code>id_token</code>) and Google Play app testing/distribution. No Firebase Analytics.</td><td>EU-US DPF / Standard Contractual Clauses</td></tr>
+        <tr><td><strong>MyMazda Connected Services (Mazda Motor Europe / regional operator)</strong></td><td>Source of vehicle telemetry and recipient of remote commands via your own MyMazda OAuth2 tokens.</td><td>Independent controller (Mazda's own privacy policy applies)</td></tr>
+        <tr><td><strong>Open-Meteo</strong></td><td>Local outdoor weather forecast for frost/heat alerts using coordinates rounded to ~1.1 km (2 decimal places) — no user identity sent.</td><td>EU / Switzerland</td></tr>
+        <tr><td><strong>Cloudflare Inc.</strong></td><td>DNS &amp; encrypted HTTPS reverse tunnel protecting the origin server.</td><td>EU-US DPF / SCC</td></tr>
+        <tr><td><strong>Self-Hosted Docker Server</strong></td><td>Stores isolated per-user AES-256-GCM encrypted vault (<code>user:&lt;id&gt;</code> &amp; <code>data:&lt;id&gt;</code> AAD).</td><td>Under direct administrator control</td></tr>
+      </table>
+
+      <h2>4. How Long We Keep Data</h2>
+      <table>
+        <tr><th>Item</th><th>Retention Period</th></tr>
+        <tr><td>Account, OAuth tokens, saved places, schedules &amp; trip/charge logs</td><td>Until deleted by you or until you click <strong>Delete Account</strong> (immediate, irreversible removal).</td></tr>
+        <tr><td>Active device sessions</td><td>Up to 90 days (automatically pruned on expiry) or immediately upon Logout / Revoke Session.</td></tr>
+        <tr><td>Android Chrome Custom Tab one-time exchange codes</td><td>60 seconds (single-use; deleted immediately on exchange).</td></tr>
+        <tr><td>WebAuthn Passkey challenges</td><td>5 minutes (single-use).</td></tr>
+      </table>
+
+      <h2>5. Your GDPR Rights</h2>
+      <p>You have the right to access, rectify, export (CSV / JSON in the Web Portal), restrict, object, and erase your data (<strong>Delete Account</strong> in-app or see <a href="delete-account.html">Delete your account</a>). Contact: <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a>. Complaints: UK ICO (<a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a>) or Hungarian NAIH (<a href="https://naih.hu" target="_blank" rel="noopener">naih.hu</a>).</p>
+    </section>
+
+    <hr style="border:none; border-top:1px solid #252f42; margin:28px 0;" />
+
+    <section id="hu">
+      <h2>Magyar összefoglaló (Adatvédelmi tájékoztató)</h2>
+      <p>A <strong>Mazda MX-30 Companion</strong> nem hivatalos társalkalmazás. A MyMazda fiókodhoz hivatalos PKCE OAuth2 belépéssel kapcsolódik — a MyMazda jelszavadat <strong>soha nem látjuk és nem tároljuk</strong>.</p>
+      <ul>
+        <li><strong>Titkosítás:</strong> Minden felhasználói profil, MyMazda OAuth2 token, helyszín, ütemezés és napló elkülönített, felhasználónkénti <strong>AES-256-GCM</strong> titkosítással kerül tárolásra, kizárólag <strong>HTTPS/TLS</strong> kapcsolaton keresztül.</li>
+        <li><strong>Nulla reklám és követés:</strong> Nincs reklám, analitika vagy harmadik feles követőkód. Az időjárás-lekérdezés ~1,1 km-re kerekített koordinátát használ név és azonosító nélkül.</li>
+        <li><strong>Eszközkezelés és helyszüneteltetés:</strong> Megtekintheted a bejelentkezett eszközeidet, távolról kiléptetheted őket, láthatod az eseménynaplóban melyik eszköz küldte a parancsot (IP-cím rögzítése nélkül), szüneteltetheted a helyrögzítést, és exportálhatod (CSV/JSON) vagy azonnal törölheted az összes adatodat.</li>
+        <li><strong>Megőrzés:</strong> Aktív munkamenetek max. 90 nap, egyszeri Android belépési kódok 60 mp, Passkey kihívások 5 perc; fiókod és naplóid a <strong>Fiók törlése</strong> gombbal azonnal, véglegesen törlődnek.</li>
+        <li><strong>Kapcsolat és GDPR jogok:</strong> <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a> • Panasz: NAIH (<a href="https://naih.hu" target="_blank" rel="noopener">naih.hu</a>) vagy UK ICO (<a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a>).</li>
+      </ul>
+    </section>
 
     <footer>
       <a href="/">← Back to Portal</a> ·
       <a href="privacy.html">Privacy Policy</a> ·
       <a href="terms.html">Terms of Use</a> ·
-      <a href="delete-account.html">Delete your account</a>
+      <a href="delete-account.html">Delete your account</a> ·
+      <a href="mailto:mx30Support@gmail.com">mx30Support@gmail.com</a>
     </footer>
   </div>
   <script>

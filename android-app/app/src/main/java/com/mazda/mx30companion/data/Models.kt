@@ -121,7 +121,16 @@ data class PeriodStats(
 data class HistoryItem(
     val timestamp: String,
     val event: String,
-    val source: String
+    val source: String,
+    val deviceName: String = ""
+)
+
+data class DeviceSessionItem(
+    val id: String,
+    val deviceName: String,
+    val createdAt: String,
+    val lastSeenAt: String,
+    val isCurrent: Boolean
 )
 
 data class VehicleStatus(
@@ -141,6 +150,9 @@ data class VehicleStatus(
     val hasOAuthToken: Boolean = false,
     val hasPasskey: Boolean = false,
     val passkeysCount: Int = 0,
+    val remoteUnlockSupported: Boolean = true,
+    val pauseLocation: Boolean = false,
+    val confirmCommands: Boolean = false,
     val battery: BatteryState = BatteryState(),
     val hvac: HvacState = HvacState(),
     val doors: DoorsState = DoorsState(),
@@ -167,6 +179,8 @@ data class VehicleStatus(
             val locObj = json.optJSONObject("location") ?: JSONObject()
             val configObj = json.optJSONObject("config") ?: JSONObject()
             val userObj = json.optJSONObject("user") ?: JSONObject()
+            val capObj = json.optJSONObject("capabilities")
+            val privObj = json.optJSONObject("privacy")
             val statsObj = json.optJSONObject("stats") ?: JSONObject()
             val wkObj = statsObj.optJSONObject("weekly") ?: JSONObject()
             val moObj = statsObj.optJSONObject("monthly") ?: JSONObject()
@@ -280,7 +294,8 @@ data class VehicleStatus(
                         HistoryItem(
                             timestamp = h.optString("timestamp", ""),
                             event = h.optString("event", ""),
-                            source = h.optString("source", "system")
+                            source = h.optString("source", "system"),
+                            deviceName = h.optString("deviceName", "")
                         )
                     )
                 }
@@ -303,6 +318,10 @@ data class VehicleStatus(
                 hasOAuthToken = configObj.optBoolean("hasOAuthToken", false),
                 hasPasskey = userObj.optBoolean("hasPasskey", false),
                 passkeysCount = userObj.optInt("passkeysCount", 0),
+                remoteUnlockSupported = capObj?.optBoolean("remoteUnlock", true)
+                    ?: (json.optString("region", "MME") != "MME"),
+                pauseLocation = privObj?.optBoolean("pauseLocation", false) ?: false,
+                confirmCommands = privObj?.optBoolean("confirmCommands", false) ?: false,
                 battery = BatteryState(
                     socPercent = bat.optInt("socPercent", 78),
                     remainingRangeKm = bat.optInt("remainingRangeKm", 164),

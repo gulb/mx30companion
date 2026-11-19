@@ -580,6 +580,22 @@
         <div class="btn-row" style="margin:0 0 14px;">
           <button class="primary" onclick="registerPasskey()" data-i18n="addPasskeyBtn">🔑 Új Passkey hozzáadása</button>
         </div>
+        <div style="padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); margin-bottom:14px;">
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;" data-i18n="privacyControlsTitle">Adatvédelem és Biztonság</div>
+          <label style="display:flex; gap:8px; align-items:center; font-size:0.83rem; color:var(--muted); margin-bottom:6px;">
+            <input type="checkbox" id="chkPauseLocation" onchange="savePrivacySettings()" style="width:auto;" />
+            <span data-i18n="pauseLocationLabel">Helyrögzítés szüneteltetése (privát mód)</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:center; font-size:0.83rem; color:var(--muted);">
+            <input type="checkbox" id="chkConfirmCommands" onchange="savePrivacySettings()" style="width:auto;" />
+            <span data-i18n="confirmCommandsLabel">Megerősítés távoli parancsok előtt</span>
+          </label>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <h2 style="margin:0;" data-i18n="devicesTitle">Bejelentkezett eszközök</h2>
+          <button type="button" onclick="logoutOtherDevices()" data-i18n="logoutOthersBtn">Többi kiléptetése</button>
+        </div>
+        <div id="devicesList" class="list" style="margin-bottom:14px;"></div>
         <h2 data-i18n="historyTitle">Eseménynapló (Timeline)</h2>
         <div id="historyList" class="list"></div>
       </div>
@@ -649,7 +665,12 @@
         btnSimTrip: "🚗 + Szimulált út",
         btnSimCharge: "⚡ + Szimulált töltés",
         btnCsvTrips: "⬇ Útnapló CSV",
-        btnCsvCharges: "⬇ Töltés CSV"
+        btnCsvCharges: "⬇ Töltés CSV",
+        privacyControlsTitle: "Adatvédelem és Biztonság",
+        pauseLocationLabel: "Helyrögzítés szüneteltetése (privát mód)",
+        confirmCommandsLabel: "Megerősítés távoli parancsok előtt",
+        devicesTitle: "Bejelentkezett eszközök",
+        logoutOthersBtn: "Többi kiléptetése"
       },
       en: {
         batteryTitle: "Battery & Charging",
@@ -712,7 +733,12 @@
         btnSimTrip: "🚗 + Simulated Trip",
         btnSimCharge: "⚡ + Simulated Charge",
         btnCsvTrips: "⬇ Trips CSV",
-        btnCsvCharges: "⬇ Charges CSV"
+        btnCsvCharges: "⬇ Charges CSV",
+        privacyControlsTitle: "Privacy & Security Controls",
+        pauseLocationLabel: "Pause location recording (privacy mode)",
+        confirmCommandsLabel: "Confirm before remote commands",
+        devicesTitle: "Signed-in Devices",
+        logoutOthersBtn: "Sign out other devices"
       }
     };
 
@@ -1044,6 +1070,39 @@
       return false;
     }
 
+    async function loadDevices() {
+      try {
+        const res = await api("/api/auth/sessions");
+        const el = document.getElementById("devicesList");
+        const isHu = (currentState?.lang || authLang) !== "en";
+        const devices = res.devices || [];
+        if (devices.length === 0) {
+          el.innerHTML = `<div class="muted" style="font-size:0.8rem;">${isHu ? "Nincs aktív munkamenet." : "No active sessions."}</div>`;
+          return;
+        }
+        el.innerHTML = devices.map((d) => `
+          <div class="list-item">
+            <div>
+              <strong>${d.isCurrent ? "📱 " : "💻 "}${d.deviceName || "Device"}</strong>
+              ${d.isCurrent ? `<span class="badge ok" style="margin-left:6px;">${isHu ? "Jelenlegi" : "Current"}</span>` : ""}
+              <div class="muted" style="font-size:0.74rem;">${new Date(d.lastSeenAt || d.createdAt).toLocaleString()}</div>
+            </div>
+            ${d.isCurrent ? "" : `<button onclick="revokeDevice('${encodeURIComponent(d.id)}')">✕</button>`}
+          </div>
+        `).join("");
+      } catch (_err) {}
+    }
+
+    async function revokeDevice(encodedId) {
+      await api(`/api/auth/sessions/${encodedId}`, "DELETE");
+      await loadDevices();
+    }
+
+    async function logoutOtherDevices() {
+      await api("/api/auth/logout-all", "POST", {});
+      await loadDevices();
+    }
+
     async function showAppView() {
       if (await completeAndroidAppHandoff()) return;
       document.getElementById("authView").style.display = "none";
@@ -1051,6 +1110,7 @@
       configFormInitialized = false;
       loadStatus(true);
       loadPasskeys();
+      loadDevices();
       if (pollHandle) clearInterval(pollHandle);
       pollHandle = setInterval(() => loadStatus(false), 10000);
     }
@@ -1163,6 +1223,23 @@
         ? (isHu ? "🔒 Zárva" : "🔒 Locked")
         : (isHu ? "🔓 Nyitva" : "🔓 Unlocked");
       document.getElementById("odometerText").textContent = `${Number(state.odometerKm || 0).toLocaleString()} km`;
+      const btnUnlock = document.getElementById("btnUnlock");
+      if (btnUnlock) {
+        const unlockBlocked = state.capabilities && state.capabilities.remoteUnlock === false && state.mode === "live";
+        btnUnlock.disabled = Boolean(unlockBlocked);
+        btnUnlock.style.opacity = unlockBlocked ? "0.45" : "1";
+        btnUnlock.title = unlockBlocked
+          ? (isHu
+              ? "A távoli ajtónyitást a Mazda Europe (MME) letiltja — csak a zárás támogatott"
+              : "Remote unlock is disabled by Mazda Europe (MME) — only Remote Lock is supported")
+          : "";
+      }
+      if (state.privacy) {
+        const chkLoc = document.getElementById("chkPauseLocation");
+        const chkConf = document.getElementById("chkConfirmCommands");
+        if (chkLoc) chkLoc.checked = Boolean(state.privacy.pauseLocation);
+        if (chkConf) chkConf.checked = Boolean(state.privacy.confirmCommands);
+      }
       document.getElementById("tireFL").textContent = `${state.tires.frontLeftBar} bar`;
       document.getElementById("tireFR").textContent = `${state.tires.frontRightBar} bar`;
       document.getElementById("tireRL").textContent = `${state.tires.rearLeftBar} bar`;
@@ -1309,7 +1386,7 @@
 
       // Timeline
       document.getElementById("historyList").innerHTML = (state.history || []).slice(0, 15)
-        .map((h) => `<div class="list-item"><span>${h.event}</span><span class="muted" style="font-size:0.76rem;">${new Date(h.timestamp).toLocaleTimeString()} (${h.source})</span></div>`)
+        .map((h) => `<div class="list-item"><span>${h.event}${h.deviceName ? ` <span class="badge" style="margin-left:6px; font-size:0.68rem;">${h.deviceName}</span>` : ""}</span><span class="muted" style="font-size:0.76rem;">${new Date(h.timestamp).toLocaleTimeString()} (${h.source})</span></div>`)
         .join("");
     }
 
@@ -1322,11 +1399,28 @@
     }
 
     async function postAction(path, body = null) {
+      const requiresConfirm = Boolean(currentState?.privacy?.confirmCommands) &&
+        (/^\/api\/(doors|hvac|charge|lights)\//.test(path));
+      if (requiresConfirm) {
+        const isHu = (currentState?.lang || authLang) !== "en";
+        const ok = confirm(
+          isHu
+            ? `Biztosan elküldöd ezt a parancsot az autódnak? (${path})`
+            : `Confirm sending remote command to your MX-30? (${path})`
+        );
+        if (!ok) return;
+      }
       try {
         render(await api(path, "POST", body));
       } catch (err) {
         alert(err.message);
       }
+    }
+
+    async function savePrivacySettings() {
+      const pauseLocation = Boolean(document.getElementById("chkPauseLocation").checked);
+      const confirmCommands = Boolean(document.getElementById("chkConfirmCommands").checked);
+      render(await api("/api/preferences", "POST", { pauseLocation, confirmCommands }));
     }
 
     async function setCarColor(carColor) {
@@ -1339,6 +1433,7 @@
       localStorage.setItem("mx30_lang", next);
       render(await api("/api/preferences", "POST", { lang: next }));
       loadPasskeys();
+      loadDevices();
     }
 
     async function saveCapacity() {

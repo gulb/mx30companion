@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mazda.mx30companion.R
+import com.mazda.mx30companion.data.DeviceSessionItem
 import com.mazda.mx30companion.data.ScheduleItem
 import com.mazda.mx30companion.data.VehicleStatus
 import kotlin.math.roundToInt
@@ -58,6 +59,7 @@ fun DashboardScreen(
     hasLocalPasskey: Boolean,
     userEmail: String,
     status: VehicleStatus,
+    sessions: List<DeviceSessionItem> = emptyList(),
     serverUrl: String,
     isBusy: Boolean,
     errorMessage: String?,
@@ -67,6 +69,12 @@ fun DashboardScreen(
     onLogout: () -> Unit,
     onToggleLang: () -> Unit,
     onSelectCarColor: (String) -> Unit,
+    onUpdatePrivacy: (pauseLocation: Boolean, confirmCommands: Boolean) -> Unit = { _, _ -> },
+    onRefreshSessions: () -> Unit = {},
+    onRevokeSession: (String) -> Unit = {},
+    onLogoutOtherDevices: () -> Unit = {},
+    onOpenPrivacyPolicy: () -> Unit = {},
+    onDeleteAccount: () -> Unit = {},
     onRefresh: () -> Unit,
     onToggleHvac: () -> Unit,
     onUpdateHvacSettings: (Double, Boolean, Boolean) -> Unit,
@@ -84,6 +92,15 @@ fun DashboardScreen(
     var showSettings by remember { mutableStateOf(false) }
     var showPoiDialog by remember { mutableStateOf(false) }
     var showSchedulesPage by remember { mutableStateOf(false) }
+    var pendingConfirm by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
+
+    fun confirmOrRun(prompt: String, action: () -> Unit) {
+        if (status.confirmCommands) {
+            pendingConfirm = prompt to action
+        } else {
+            action()
+        }
+    }
 
     if (!isLoggedIn) {
         AuthScreen(
@@ -489,7 +506,13 @@ fun DashboardScreen(
                                 onUpdateHvacSettings((next * 10.0).roundToInt() / 10.0, status.hvac.frontDefroster, status.hvac.rearDefroster)
                             }
                             Button(
-                                onClick = onToggleHvac,
+                                onClick = {
+                                    confirmOrRun(
+                                        if (isHu) "Biztosan kapcsolod az utastér-klimatizálást?"
+                                        else "Confirm toggling cabin climate?",
+                                        onToggleHvac
+                                    )
+                                },
                                 enabled = !isBusy,
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -511,23 +534,38 @@ fun DashboardScreen(
 
             // 5. 2x2 Light Squircle Control Buttons (Plan 2)
             item {
+                val canUnlock = status.remoteUnlockSupported
+                val lockTileLabel = when {
+                    !canUnlock && status.doors.locked -> if (isHu) "Újrazárás" else "Re-lock"
+                    !canUnlock -> if (isHu) "Zárás" else "Lock"
+                    status.doors.locked -> if (isHu) "Nyitás" else "Unlock"
+                    else -> if (isHu) "Zárás" else "Lock"
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         SquircleControlTile(
-                            label = if (status.doors.locked) {
-                                if (isHu) "Nyitás" else "Unlock"
-                            } else {
-                                if (isHu) "Zárás" else "Lock"
-                            },
-                            icon = if (status.doors.locked) Icons.Default.Lock else Icons.Default.LockOpen,
+                            label = lockTileLabel,
+                            icon = if (!canUnlock || !status.doors.locked) Icons.Default.Lock else Icons.Default.LockOpen,
                             active = !status.doors.locked,
                             activeColor = IosAmber,
                             enabled = !isBusy,
                             modifier = Modifier.weight(1f),
-                            onClick = { if (status.doors.locked) onUnlockDoors() else onLockDoors() }
+                            onClick = {
+                                if (canUnlock && status.doors.locked) {
+                                    confirmOrRun(
+                                        if (isHu) "Biztosan kinyitod a járművet?" else "Confirm unlocking doors?",
+                                        onUnlockDoors
+                                    )
+                                } else {
+                                    confirmOrRun(
+                                        if (isHu) "Biztosan bezárod a járművet?" else "Confirm locking doors?",
+                                        onLockDoors
+                                    )
+                                }
+                            }
                         )
                         SquircleControlTile(
                             label = if (status.battery.charging) {
@@ -540,7 +578,17 @@ fun DashboardScreen(
                             activeColor = IosEmerald,
                             enabled = !isBusy,
                             modifier = Modifier.weight(1f),
-                            onClick = { onSetCharging(!status.battery.charging) }
+                            onClick = {
+                                confirmOrRun(
+                                    if (status.battery.charging) {
+                                        if (isHu) "Biztosan leállítod a töltést?" else "Confirm stopping charge?"
+                                    } else {
+                                        if (isHu) "Biztosan elindítod a töltést?" else "Confirm starting charge?"
+                                    }
+                                ) {
+                                    onSetCharging(!status.battery.charging)
+                                }
+                            }
                         )
                     }
                     Row(
@@ -731,9 +779,81 @@ fun DashboardScreen(
                             }
                         }
                     }
+
+                    if (status.history.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = if (isHu) "Legutóbbi események" else "Recent Activity",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Slate700
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        status.history.take(5).forEach { item ->
+                            val tsShort = if (item.timestamp.length >= 16) {
+                                item.timestamp.substring(5, 16).replace("T", " ")
+                            } else {
+                                item.timestamp
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "$tsShort · ${item.event}",
+                                    fontSize = 11.sp,
+                                    color = Slate900,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f).padding(end = 6.dp)
+                                )
+                                if (item.deviceName.isNotBlank()) {
+                                    Text(
+                                        text = item.deviceName,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = IosBlue,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    pendingConfirm?.let { (message, exec) ->
+        AlertDialog(
+            onDismissRequest = { pendingConfirm = null },
+            containerColor = Color.White,
+            titleContentColor = Slate900,
+            textContentColor = Slate700,
+            title = {
+                Text(
+                    if (isHu) "Megerősítés szükséges" else "Confirm Remote Command",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = { Text(message) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        pendingConfirm = null
+                        exec()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = IosBlue)
+                ) { Text(if (isHu) "Mehet" else "Confirm") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingConfirm = null }) {
+                    Text(if (isHu) "Mégse" else "Cancel", color = Slate500)
+                }
+            }
+        )
     }
 
     if (showPoiDialog) {
@@ -754,8 +874,21 @@ fun DashboardScreen(
             initialUrl = serverUrl,
             initialRegion = status.region,
             initialMode = status.mode,
+            pauseLocation = status.pauseLocation,
+            confirmCommands = status.confirmCommands,
+            sessions = sessions,
+            isBusy = isBusy,
             isHu = isHu,
             onDismiss = { showSettings = false },
+            onUpdatePrivacy = onUpdatePrivacy,
+            onRefreshSessions = onRefreshSessions,
+            onRevokeSession = onRevokeSession,
+            onLogoutOtherDevices = onLogoutOtherDevices,
+            onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+            onDeleteAccount = {
+                showSettings = false
+                onDeleteAccount()
+            },
             onLogout = {
                 showSettings = false
                 onLogout()
@@ -1032,28 +1165,205 @@ private fun ConnectionSettingsDialog(
     initialUrl: String,
     initialRegion: String,
     initialMode: String,
+    pauseLocation: Boolean,
+    confirmCommands: Boolean,
+    sessions: List<DeviceSessionItem>,
+    isBusy: Boolean,
     isHu: Boolean,
     onDismiss: () -> Unit,
+    onUpdatePrivacy: (Boolean, Boolean) -> Unit,
+    onRefreshSessions: () -> Unit,
+    onRevokeSession: (String) -> Unit,
+    onLogoutOtherDevices: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onLogout: () -> Unit,
     onSave: (String, String, String) -> Unit
 ) {
     var url by remember { mutableStateOf(initialUrl) }
     var region by remember { mutableStateOf(initialRegion.ifBlank { "MME" }) }
     var mode by remember { mutableStateOf(if (initialMode == "live") "auto" else initialMode) }
+    var confirmDeleteAccount by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        onRefreshSessions()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
         titleContentColor = Slate900,
         textContentColor = Slate900,
-        title = { Text(if (isHu) "Kapcsolat és Régió" else "Connection & Region", fontWeight = FontWeight.Bold) },
+        title = { Text(if (isHu) "Kapcsolat, Biztonság és Adatvédelem" else "Connection, Security & Privacy", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("Server URL") }, singleLine = true)
                 OutlinedTextField(value = region, onValueChange = { region = it.uppercase() }, label = { Text("Region (MME / MNAO / MJO)") }, singleLine = true)
                 OutlinedTextField(value = mode, onValueChange = { mode = it.lowercase() }, label = { Text("Mode (auto / demo)") }, singleLine = true)
+
+                HorizontalDivider(color = GlassBorder)
+                Text(
+                    text = if (isHu) "Adatvédelem és vezérlésvédelem" else "Privacy & Command Safety",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Slate700
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isHu) "GPS helyrögzítés szüneteltetése" else "Pause GPS / Location tracking",
+                        fontSize = 12.sp,
+                        color = Slate900,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    )
+                    Switch(
+                        checked = pauseLocation,
+                        enabled = !isBusy,
+                        onCheckedChange = { next -> onUpdatePrivacy(next, confirmCommands) }
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isHu) "Megerősítés távoli parancsok előtt" else "Confirm remote commands",
+                        fontSize = 12.sp,
+                        color = Slate900,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    )
+                    Switch(
+                        checked = confirmCommands,
+                        enabled = !isBusy,
+                        onCheckedChange = { next -> onUpdatePrivacy(pauseLocation, next) }
+                    )
+                }
+
+                HorizontalDivider(color = GlassBorder)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isHu) "Bejelentkezett eszközök" else "Signed-in Devices",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Slate700
+                    )
+                    TextButton(
+                        onClick = onRefreshSessions,
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                    ) {
+                        Text(if (isHu) "Frissít" else "Refresh", fontSize = 11.sp, color = IosBlue)
+                    }
+                }
+                if (sessions.isEmpty()) {
+                    Text(
+                        text = if (isHu) "Eszközlista betöltése..." else "Loading active sessions...",
+                        fontSize = 11.sp,
+                        color = Slate500
+                    )
+                } else {
+                    sessions.forEach { sess ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
+                                Text(
+                                    text = sess.deviceName,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Slate900,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = if (sess.isCurrent) (if (isHu) "Aktuális eszköz" else "Current device")
+                                    else sess.lastSeenAt.take(16).replace("T", " "),
+                                    fontSize = 10.sp,
+                                    color = if (sess.isCurrent) IosEmeraldText else Slate500
+                                )
+                            }
+                            if (!sess.isCurrent) {
+                                TextButton(
+                                    onClick = { onRevokeSession(sess.id) },
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                                ) {
+                                    Text(if (isHu) "Tiltás" else "Revoke", fontSize = 11.sp, color = MazdaRose, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                    if (sessions.any { !it.isCurrent }) {
+                        TextButton(onClick = onLogoutOtherDevices) {
+                            Text(
+                                text = if (isHu) "Összes többi eszköz kiléptetése" else "Sign out all other devices",
+                                fontSize = 12.sp,
+                                color = IosAmberText,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = GlassBorder)
+                TextButton(onClick = onOpenPrivacyPolicy) {
+                    Text(
+                        text = if (isHu) "Adatvédelmi tájékoztató és GDPR" else "Privacy Policy & GDPR",
+                        color = IosBlue,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 TextButton(onClick = onLogout) {
-                    Text(if (isHu) "Kilépés" else "Sign Out", color = MazdaRose, fontWeight = FontWeight.Bold)
+                    Text(if (isHu) "Kilépés" else "Sign Out", color = Slate700, fontWeight = FontWeight.Bold)
+                }
+                if (!confirmDeleteAccount) {
+                    TextButton(onClick = { confirmDeleteAccount = true }) {
+                        Text(
+                            text = if (isHu) "Fiók és összes adat törlése" else "Delete Account & All Data",
+                            color = MazdaRose,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFFF1F2))
+                            .padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (isHu) "Biztosan végleg törlöd a fiókodat, tokenjeidet és előzményeidet?"
+                            else "Permanently delete your account, OAuth tokens, and all history?",
+                            fontSize = 11.sp,
+                            color = MazdaRose,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = onDeleteAccount,
+                                colors = ButtonDefaults.buttonColors(containerColor = MazdaRose),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(if (isHu) "Végleges törlés" else "Delete Forever", fontSize = 11.sp)
+                            }
+                            TextButton(onClick = { confirmDeleteAccount = false }) {
+                                Text(if (isHu) "Mégse" else "Cancel", fontSize = 11.sp, color = Slate500)
+                            }
+                        }
+                    }
                 }
             }
         },

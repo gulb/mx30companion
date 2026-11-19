@@ -135,6 +135,11 @@ function createDefaultUserData({ email = "", lang = "hu" } = {}) {
   const state = {
     lang: cleanLang,
     carColor: "ceramic_metallic",
+    carColorCustom: false,
+    privacy: {
+      pauseLocation: false,
+      confirmCommands: false
+    },
     mode: "demo",
     region: envRegion,
     vehicleId: "JMZDR1WBJ00123456",
@@ -291,12 +296,17 @@ class MazdaCompanionClient {
     return this.isLiveConfigured() || this.hasWebhook() ? "live" : "demo";
   }
 
-  recordHistory(event, source = "user") {
-    this.store.state.history.unshift({
+  recordHistory(event, source = "user", deviceName = "") {
+    const entry = {
       timestamp: new Date().toISOString(),
       event,
       source
-    });
+    };
+    const cleanDevice = String(deviceName || "").trim().slice(0, 60);
+    if (cleanDevice) {
+      entry.deviceName = cleanDevice;
+    }
+    this.store.state.history.unshift(entry);
     if (this.store.state.history.length > MAX_HISTORY_ENTRIES) {
       this.store.state.history = this.store.state.history.slice(0, MAX_HISTORY_ENTRIES);
     }
@@ -315,19 +325,38 @@ class MazdaCompanionClient {
     const state = this.store.state;
     const lang = state.lang === "en" ? "en" : "hu";
     state.mode = this.getActiveMode();
-    state.region = this.store.config.region;
-    state.currentPlace = resolvePlaceName(
-      state.location?.latitude,
-      state.location?.longitude,
-      state.places,
-      lang
-    );
+    state.region = this.store.config.region || "MME";
+    state.privacy = {
+      pauseLocation: Boolean(state.privacy?.pauseLocation),
+      confirmCommands: Boolean(state.privacy?.confirmCommands)
+    };
+    state.capabilities = {
+      remoteUnlock: state.region !== "MME",
+      remoteLock: true,
+      hvac: true,
+      charging: true,
+      sendPoi: true,
+      flashLights: true
+    };
+    if (state.privacy.pauseLocation) {
+      state.location = null;
+      state.currentPlace = lang === "hu" ? "Helyrögzítés szüneteltetve" : "Location paused";
+    } else {
+      state.currentPlace = resolvePlaceName(
+        state.location?.latitude,
+        state.location?.longitude,
+        state.places,
+        lang
+      );
+    }
     updateEnergyMetrics(state);
 
     if (refreshWeather) {
+      const weatherLat = state.location?.latitude ?? state.places?.[0]?.latitude;
+      const weatherLon = state.location?.longitude ?? state.places?.[0]?.longitude;
       state.weather = await fetchOutdoorWeather(
-        state.location?.latitude,
-        state.location?.longitude,
+        weatherLat,
+        weatherLon,
         lang,
         state.weather
       );
@@ -426,7 +455,7 @@ class MazdaCompanionClient {
     return this.getStatus({ forceRefresh: false });
   }
 
-  async setPreferences({ lang, capacityKwh, carColor }) {
+  async setPreferences({ lang, capacityKwh, carColor, pauseLocation, confirmCommands }) {
     if (lang === "hu" || lang === "en") {
       this.store.state.lang = lang;
       this.db.updateUserProfile(this.userId, { lang });
@@ -440,6 +469,20 @@ class MazdaCompanionClient {
     const validColors = new Set(["ceramic_metallic", "soul_red", "polymetal_grey", "arctic_white"]);
     if (validColors.has(String(carColor || "").trim())) {
       this.store.state.carColor = String(carColor).trim();
+      this.store.state.carColorCustom = true;
+    }
+    this.store.state.privacy = {
+      pauseLocation: Boolean(this.store.state.privacy?.pauseLocation),
+      confirmCommands: Boolean(this.store.state.privacy?.confirmCommands)
+    };
+    if (typeof pauseLocation === "boolean") {
+      this.store.state.privacy.pauseLocation = pauseLocation;
+      if (pauseLocation) {
+        this.store.state.location = null;
+      }
+    }
+    if (typeof confirmCommands === "boolean") {
+      this.store.state.privacy.confirmCommands = confirmCommands;
     }
     this.recordHistory(
       `Preferences updated (lang=${this.store.state.lang}, capacity=${this.store.state.battery.capacityKwh} kWh, color=${this.store.state.carColor || "ceramic_metallic"})`,
@@ -815,6 +858,18 @@ class MazdaCompanionClient {
         state.region = this.store.config.region;
         state.vehicleId = String(vehicle.vin || vehicle.id || state.vehicleId);
         state.nickname = vehicle.nickname || vehicle.modelName || "Mazda MX-30 e-SKYACTIV";
+        if (!state.carColorCustom && vehicle.exteriorColorCode) {
+          const colorMap = {
+            "47A": "ceramic_metallic",
+            "46V": "soul_red",
+            "47C": "polymetal_grey",
+            "A4D": "arctic_white"
+          };
+          const detectedColor = colorMap[String(vehicle.exteriorColorCode).trim().toUpperCase()];
+          if (detectedColor) {
+            state.carColor = detectedColor;
+          }
+        }
 
         if (baseStatus) {
           const doors = baseStatus.doors || {};
@@ -854,7 +909,9 @@ class MazdaCompanionClient {
           if (typeof baseStatus.odometerKm === "number") {
             state.odometerKm = Math.round(baseStatus.odometerKm);
           }
-          if (typeof loc.latitude === "number" && typeof loc.longitude === "number") {
+          if (state.privacy?.pauseLocation) {
+            state.location = null;
+          } else if (typeof loc.latitude === "number" && typeof loc.longitude === "number") {
             state.location = { latitude: loc.latitude, longitude: loc.longitude };
           }
         }
@@ -918,12 +975,17 @@ class MazdaCompanionClient {
         state.lastUpdated = now;
         state.lastCloudSync = now;
         state.lastError = null;
-        state.currentPlace = resolvePlaceName(
-          state.location?.latitude,
-          state.location?.longitude,
-          state.places,
-          state.lang
-        );
+        if (state.privacy?.pauseLocation) {
+          state.location = null;
+          state.currentPlace = state.lang === "hu" ? "Helyrögzítés szüneteltetve" : "Location paused";
+        } else {
+          state.currentPlace = resolvePlaceName(
+            state.location?.latitude,
+            state.location?.longitude,
+            state.places,
+            state.lang
+          );
+        }
         if (wasLiveSynced) {
           detectTripOrCharge(prevSnapshot, state);
         }
@@ -1058,7 +1120,7 @@ class MazdaCompanionClient {
     return this.getStatus({ forceRefresh: false });
   }
 
-  async setHvacSettings({ targetTempC, frontDefroster, rearDefroster }, source = "user") {
+  async setHvacSettings({ targetTempC, frontDefroster, rearDefroster }, source = "user", deviceName = "") {
     const hvac = this.store.state.hvac;
     if (typeof targetTempC === "number" && !Number.isNaN(targetTempC)) {
       hvac.targetTempC = Math.max(15, Math.min(29, Number(targetTempC.toFixed(1))));
@@ -1080,19 +1142,20 @@ class MazdaCompanionClient {
     this.store.state.lastUpdated = new Date().toISOString();
     this.recordHistory(
       `HVAC target set to ${hvac.targetTempC}°C (frontDefrost=${hvac.frontDefroster}, rearDefrost=${hvac.rearDefroster})`,
-      source
+      source,
+      deviceName
     );
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }
 
-  async setHvacPower(turnOn, options = {}, source = "user") {
+  async setHvacPower(turnOn, options = {}, source = "user", deviceName = "") {
     if (
       options.targetTempC !== undefined ||
       options.frontDefroster !== undefined ||
       options.rearDefroster !== undefined
     ) {
-      await this.setHvacSettings(options, source);
+      await this.setHvacSettings(options, source, deviceName);
     }
 
     await this.dispatchRemoteCommand(
@@ -1113,17 +1176,18 @@ class MazdaCompanionClient {
       turnOn
         ? `Climate ON (target ${this.store.state.hvac.targetTempC}°C)`
         : "Climate OFF",
-      source
+      source,
+      deviceName
     );
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }
 
-  async toggleHvac(source = "user") {
-    return this.setHvacPower(!this.store.state.hvac.hvacOn, {}, source);
+  async toggleHvac(source = "user", deviceName = "") {
+    return this.setHvacPower(!this.store.state.hvac.hvacOn, {}, source, deviceName);
   }
 
-  async setCharging(start, source = "user") {
+  async setCharging(start, source = "user", deviceName = "") {
     const battery = this.store.state.battery;
     if (start && !battery.pluggedIn && this.getActiveMode() === "demo") {
       throw new Error("Cannot start charging while MX-30 is unplugged");
@@ -1139,27 +1203,51 @@ class MazdaCompanionClient {
     battery.charging = Boolean(start);
     battery.chargeTimeRemainingMin = start ? Math.max(0, (100 - battery.socPercent) * 4) : 0;
     this.store.state.lastUpdated = new Date().toISOString();
-    this.recordHistory(start ? "EV charging started" : "EV charging stopped", source);
+    this.recordHistory(start ? "EV charging started" : "EV charging stopped", source, deviceName);
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }
 
-  async setDoorsLocked(lock, source = "user") {
-    await this.dispatchRemoteCommand(
-      lock ? "lockDoors" : "unlockDoors",
-      { locked: Boolean(lock) },
-      lock ? ["lockDoors"] : ["unlockDoors"],
-      (vehicle) => [vehicle.id]
-    );
+  async setDoorsLocked(lock, source = "user", deviceName = "") {
+    const region = this.store.config.region || "MME";
+    const isHu = this.store.state.lang !== "en";
+    if (!lock && this.getActiveMode() === "live" && region === "MME") {
+      const err = new Error(
+        isHu
+          ? "A távoli ajtónyitást a Mazda Europe (MME) letiltja az EU/UK MX-30 modelleken — csak a távoli zárás támogatott."
+          : "Remote door unlock is disabled by Mazda Europe (MME) for UK/EU MX-30 vehicles — only Remote Lock is supported."
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    try {
+      await this.dispatchRemoteCommand(
+        lock ? "lockDoors" : "unlockDoors",
+        { locked: Boolean(lock) },
+        lock ? ["lockDoors"] : ["unlockDoors"],
+        (vehicle) => [vehicle.id]
+      );
+    } catch (err) {
+      if (!lock) {
+        const msg = isHu
+          ? `A Mazda szerver elutasította a távoli nyitást (${err.message}). EU/UK modelleken gyakran csak a zárás engedélyezett.`
+          : `Mazda server rejected remote unlock (${err.message}). On EU/UK vehicles only Remote Lock may be permitted.`;
+        const wrapped = new Error(msg);
+        wrapped.statusCode = 400;
+        throw wrapped;
+      }
+      throw err;
+    }
 
     this.store.state.doors.locked = Boolean(lock);
     this.store.state.lastUpdated = new Date().toISOString();
-    this.recordHistory(lock ? "Doors locked" : "Doors unlocked", source);
+    this.recordHistory(lock ? "Doors locked" : "Doors unlocked", source, deviceName);
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }
 
-  async flashHazardLights(source = "user") {
+  async flashHazardLights(source = "user", deviceName = "") {
     await this.dispatchRemoteCommand(
       "flashHazardLights",
       {},
@@ -1168,12 +1256,12 @@ class MazdaCompanionClient {
     );
 
     this.store.state.lastUpdated = new Date().toISOString();
-    this.recordHistory("Hazard lights flashed", source);
+    this.recordHistory("Hazard lights flashed", source, deviceName);
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }
 
-  async sendPoi({ latitude, longitude, name }) {
+  async sendPoi({ latitude, longitude, name }, deviceName = "") {
     const lat = Number(latitude);
     const lon = Number(longitude);
     if (Number.isNaN(lat) || Number.isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
@@ -1188,7 +1276,11 @@ class MazdaCompanionClient {
       (vehicle) => [vehicle.id, lat, lon, cleanName]
     );
 
-    this.recordHistory(`Sent POI "${cleanName}" (${lat.toFixed(4)}, ${lon.toFixed(4)}) to car nav`, "user");
+    this.recordHistory(
+      `Sent POI "${cleanName}" (${lat.toFixed(4)}, ${lon.toFixed(4)}) to car nav`,
+      "user",
+      deviceName
+    );
     await this.finalizeState({ refreshWeather: false });
     return this.getStatus();
   }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.mazda.mx30companion.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -300,6 +301,9 @@ class MX30ApiClient(context: Context) {
 
     suspend fun toggleHvac(): VehicleStatus = requestStatus("/api/hvac/toggle", "POST")
 
+    suspend fun setHvacPower(on: Boolean): VehicleStatus =
+        requestStatus(if (on) "/api/hvac/on" else "/api/hvac/off", "POST", JSONObject())
+
     suspend fun updateHvacSettings(
         targetTempC: Double,
         frontDefroster: Boolean,
@@ -335,13 +339,55 @@ class MX30ApiClient(context: Context) {
     suspend fun setPreferences(
         lang: String? = null,
         capacityKwh: Double? = null,
-        carColor: String? = null
+        carColor: String? = null,
+        pauseLocation: Boolean? = null,
+        confirmCommands: Boolean? = null
     ): VehicleStatus {
         val payload = JSONObject()
         if (lang != null) payload.put("lang", lang)
         if (capacityKwh != null) payload.put("capacityKwh", capacityKwh)
         if (carColor != null) payload.put("carColor", carColor)
+        if (pauseLocation != null) payload.put("pauseLocation", pauseLocation)
+        if (confirmCommands != null) payload.put("confirmCommands", confirmCommands)
         return requestStatus("/api/preferences", "POST", payload)
+    }
+
+    suspend fun fetchSessions(): List<DeviceSessionItem> {
+        val res = rawRequest("/api/auth/sessions", "GET")
+        return parseSessions(res)
+    }
+
+    suspend fun revokeSession(sessionId: String): List<DeviceSessionItem> {
+        val res = rawRequest("/api/auth/sessions/$sessionId", "DELETE")
+        return parseSessions(res)
+    }
+
+    suspend fun logoutOtherDevices(): List<DeviceSessionItem> {
+        val res = rawRequest("/api/auth/logout-all", "POST", JSONObject())
+        return parseSessions(res)
+    }
+
+    suspend fun deleteAccount() {
+        rawRequest("/api/account", "DELETE")
+        clearAuth()
+    }
+
+    private fun parseSessions(res: JSONObject): List<DeviceSessionItem> {
+        val arr = res.optJSONArray("devices") ?: JSONArray()
+        return buildList {
+            for (i in 0 until arr.length()) {
+                val d = arr.optJSONObject(i) ?: continue
+                add(
+                    DeviceSessionItem(
+                        id = d.optString("id", ""),
+                        deviceName = d.optString("deviceName", "Device"),
+                        createdAt = d.optString("createdAt", ""),
+                        lastSeenAt = d.optString("lastSeenAt", ""),
+                        isCurrent = d.optBoolean("isCurrent", false)
+                    )
+                )
+            }
+        }
     }
 
     suspend fun saveSchedules(schedules: List<ScheduleItem>): VehicleStatus {
@@ -391,6 +437,6 @@ class MX30ApiClient(context: Context) {
         private const val KEY_PASSKEY_COUNTER = "passkey_counter"
         private const val KEY_CACHED_STATUS = "cached_status_json"
         private const val PASSKEY_ALIAS = "mx30_passkey_ec"
-        const val DEFAULT_SERVER_URL = "https://your-domain.example"
+        val DEFAULT_SERVER_URL: String = BuildConfig.DEFAULT_SERVER_URL
     }
 }
